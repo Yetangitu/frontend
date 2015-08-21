@@ -25,6 +25,7 @@ class Epi
     'config' => array('base', 'EpiConfig.php', 'config-file', 'config-mysql'),
     'config-file' => array('base', 'EpiConfig.php', 'EpiConfig_File.php'),
     'config-mysql' => array('base', 'database', 'EpiConfig.php', 'EpiConfig_MySql.php'),
+    'config-pgsql' => array('base', 'database', 'EpiConfig.php', 'EpiConfig_PostgreSql.php'),
     'form' => array('EpiForm.php'),
     'logger' => array('EpiLogger.php'),
     'session' => array('base', 'EpiSession.php', 'session-php', 'session-apc', 'session-memcached'),

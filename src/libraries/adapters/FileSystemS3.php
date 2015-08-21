@@ -60,7 +60,7 @@ class FileSystemS3 implements FileSystemInterface
 
   public function downloadPhoto($photo)
   {
-    $fp = fopen($photo['pathOriginal'], 'r');
+    $fp = fopen($photo['path_original'], 'r');
     return $fp;
   }
 
@@ -140,7 +140,7 @@ class FileSystemS3 implements FileSystemInterface
     * @param string $acl Permission setting for this photo.
     * @return boolean
     */
-  public function putPhoto($localFile, $remoteFile, $dateTaken)
+  public function putPhoto($localFile, $remoteFile, $date_taken)
   {
     $acl = AmazonS3::ACL_PUBLIC;
     if(!file_exists($localFile))
@@ -179,7 +179,7 @@ class FileSystemS3 implements FileSystemInterface
     {
       list($localFile, $remoteFileArr) = each($file);
       $remoteFile = $remoteFileArr[0];
-      $dateTaken = $remoteFileArr[1];
+      $date_taken = $remoteFileArr[1];
       $opts = $this->getUploadOpts($localFile, $acl);
       $remoteFile = $this->normalizePath($remoteFile);
       $this->fs->batch($queue)->create_object($this->bucket, $remoteFile, $opts);

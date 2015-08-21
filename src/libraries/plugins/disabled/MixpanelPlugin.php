@@ -6,7 +6,7 @@
  */
 class MixpanelPlugin extends PluginBase
 {
-  private $appId;
+  private $app_id;
   public function __construct()
   {
     parent::__construct();

@@ -67,16 +67,16 @@ class Photo extends Media
       }
     }
 
-    $photo['pathBase'] = $this->generateUrlBaseOrOriginal($photo, 'base');
+    $photo['path_base'] = $this->generateUrlBaseOrOriginal($photo, 'base');
     // the original needs to be conditionally included
     if($this->config->site->allowOriginalDownload == 1 || $this->user->isAdmin())
     {
-      $photo['pathOriginal'] = $this->generateUrlBaseOrOriginal($photo, 'original');
+      $photo['path_original'] = $this->generateUrlBaseOrOriginal($photo, 'original');
       $photo['pathDownload'] = $this->generateUrlDownload($photo, $token);
     }
-    elseif(isset($photo['pathOriginal']))
+    elseif(isset($photo['path_original']))
     {
-      unset($photo['pathOriginal']);
+      unset($photo['path_original']);
     }
 
     $photo['url'] = $this->getPhotoViewUrl($photo, $filterOpts);
@@ -148,7 +148,7 @@ class Photo extends Media
     if($isAttachment)
     {
       header('Content-Description: File Transfer');
-      header('Content-Disposition: attachment; filename="'.$photo['filenameOriginal'].'"');
+      header('Content-Disposition: attachment; filename="'.$photo['filename_original'].'"');
     }
     while($buffer = fgets($fp, 4096))
       echo $buffer;
@@ -212,10 +212,10 @@ class Photo extends Media
       return false;
     }
 
-    $filename = $this->fs->getPhoto($photo['pathBase']);
+    $filename = $this->fs->getPhoto($photo['path_base']);
     if(!$filename)
     {
-      $this->logger->crit(sprintf('Could not get photo from fs in generate method %s', $photo['pathBase']));
+      $this->logger->crit(sprintf('Could not get photo from fs in generate method %s', $photo['path_base']));
       return false;
     }
 
@@ -249,9 +249,9 @@ class Photo extends Media
 
     $this->image->scale($width, $height, $maintainAspectRatio);
     $this->image->write($filename, 'jpg');
-    $customPath = $this->generateCustomUrl($photo['pathBase'], $width, $height, $options);
+    $customPath = $this->generateCustomUrl($photo['path_base'], $width, $height, $options);
     $key = $this->generateCustomKey($width, $height, $options);
-    $resFs = $this->fs->putPhoto($filename, $customPath, $photo['dateTaken']);
+    $resFs = $this->fs->putPhoto($filename, $customPath, $photo['date_taken']);
     $resDb = $this->db->postPhoto($id, array($key => $customPath));
     // TODO unlink $filename
     if($resFs && $resDb)
@@ -311,15 +311,15 @@ class Photo extends Media
     * @param string $photoName File name of the photo
     * @return array
     */
-  public function generatePaths($photoName, $dateTaken)
+  public function generatePaths($photoName, $date_taken)
   {
     $ext = substr($photoName, (strrpos($photoName, '.')+1));
     $rootName = preg_replace('/[^a-zA-Z0-9.-_]/', '-', substr($photoName, 0, (strrpos($photoName, '.'))));
     $baseName = sprintf('%s-%s.%s', $rootName, dechex(rand(1000000,9999999)), 'jpg');
     $originalName = sprintf('%s-%s.%s', $rootName, uniqid(), $ext);
     return array(
-      'pathOriginal' => sprintf('/original/%s/%s', date('Ym', $dateTaken), $originalName),
-      'pathBase' => sprintf('/base/%s/%s', date('Ym', $dateTaken), $baseName)
+      'path_original' => sprintf('/original/%s/%s', date('Ym', $date_taken), $originalName),
+      'path_base' => sprintf('/base/%s/%s', date('Ym', $date_taken), $baseName)
     );
   }
 
@@ -344,9 +344,9 @@ class Photo extends Media
       $assetProtocol = $this->config->site->assetProtocol;
 
     if($type === 'base')
-      return "{$assetProtocol}://{$photo['host']}{$photo['pathBase']}";
+      return "{$assetProtocol}://{$photo['host']}{$photo['path_base']}";
     elseif($type === 'original')
-      return "{$assetProtocol}://{$photo['host']}{$photo['pathOriginal']}";
+      return "{$assetProtocol}://{$photo['host']}{$photo['path_original']}";
 
   }
 
@@ -509,7 +509,7 @@ class Photo extends Media
           $parsedDate = time();
       }
     }
-    $dateTaken = $parsedDate;    
+    $date_taken = $parsedDate;    
 
     $width = $size[0];
     $height = $size[1];
@@ -532,7 +532,7 @@ class Photo extends Media
       }
     }
 
-    $exif_array = array('dateTaken' => $dateTaken, 'width' => $width,
+    $exif_array = array('date_taken' => $date_taken, 'width' => $width,
       'height' => $height, 'cameraModel' => @$exif['Model'],
       'cameraMake' => @$exif['Make'],
       'ISO' => @$exif['ISOSpeedRatings'],
@@ -562,7 +562,7 @@ class Photo extends Media
       return false;
     }
 
-    $filename = $this->fs->getPhoto($photo['pathBase']);
+    $filename = $this->fs->getPhoto($photo['path_base']);
     if(!$filename)
     {
       $this->logger->crit('Could not get photo from fs in transform method');
@@ -580,8 +580,8 @@ class Photo extends Media
     }
 
     // update the file on the file system and update the db with the path
-    $paths = $this->generatePaths($photo['filenameOriginal']);
-    $updateFields = array('pathBase' => $paths['pathBase']);
+    $paths = $this->generatePaths($photo['filename_original']);
+    $updateFields = array('path_base' => $paths['path_base']);
     foreach($transformations as $trans => $value)
     {
       switch($trans)
@@ -593,7 +593,7 @@ class Photo extends Media
       }
     }
 
-    $updateFs = $this->fs->putPhoto($filename, $paths['pathBase'], $photo['dateTaken']);
+    $updateFs = $this->fs->putPhoto($filename, $paths['path_base'], $photo['date_taken']);
     $updateDb = $this->db->postPhoto($id, $updateFields);
 
     unlink($filename);
@@ -659,14 +659,14 @@ class Photo extends Media
     $exif = $this->readExif($localFile, $allowAutoRotate);
     $iptc = $this->readIptc($localFile);
 
-    if(isset($attributes['dateTaken']) && !empty($attributes['dateTaken']))
-      $dateTaken = $attributes['dateTaken'];
-    elseif(isset($exif['dateTaken']))
-      $dateTaken = $exif['dateTaken'];
+    if(isset($attributes['date_taken']) && !empty($attributes['date_taken']))
+      $date_taken = $attributes['date_taken'];
+    elseif(isset($exif['date_taken']))
+      $date_taken = $exif['date_taken'];
     else
-      $dateTaken = time();
+      $date_taken = time();
 
-    $resp = $this->createAndStoreBaseAndOriginal($name, $localFile, $dateTaken, $allowAutoRotate);
+    $resp = $this->createAndStoreBaseAndOriginal($name, $localFile, $date_taken, $allowAutoRotate);
     $paths = $resp['paths'];
 
     $attributes = array_merge($this->whitelistParams($attributes), $resp['paths']);
@@ -705,13 +705,13 @@ class Photo extends Media
           $attributes[$mapName] = $exif[$paramName];
       }
 
-      $attributes['dateTakenDay'] = date('d', $dateTaken);
-      $attributes['dateTakenMonth'] = date('m', $dateTaken);
-      $attributes['dateTakenYear'] = date('Y', $dateTaken);
+      $attributes['date_taken_day'] = date('d', $date_taken);
+      $attributes['date_taken_month'] = date('m', $date_taken);
+      $attributes['date_taken_year'] = date('Y', $date_taken);
       $attributes['hash'] = sha1_file($localFile);
       $attributes['size'] = intval(filesize($localFile)/1024);
       $attributes['host'] = $this->fs->getHost();
-      $attributes['filenameOriginal'] = $name;
+      $attributes['filename_original'] = $name;
 
       $tagObj = new Tag;
       if(isset($attributes['tags']) && !empty($attributes['tags']))
@@ -735,7 +735,7 @@ class Photo extends Media
         // delete all photos from the original photo object (includes paths to existing photos)
         // check if skipDeleteOriginal is passed in and remove from $photo and $attributes to preserve
         if($skipOriginal === '1')
-          unset($photo['pathOriginal']);
+          unset($photo['path_original']);
 
         $delFilesResp = $this->fs->deletePhoto($photo);
         if(!$delFilesResp)
@@ -828,20 +828,20 @@ class Photo extends Media
       return false;
     }
     $tagObj = new Tag;
-    $filenameOriginal = $name;
+    $filename_original = $name;
 
     $allowAutoRotate = isset($attributes['allowAutoRotate']) ? $attributes['allowAutoRotate'] : '1';
     $exif = $this->readExif($localFile, $allowAutoRotate);
     $iptc = $this->readIptc($localFile);
 
-    if(isset($attributes['dateTaken']) && !empty($attributes['dateTaken']))
-      $dateTaken = $attributes['dateTaken'];
-    elseif(isset($exif['dateTaken']))
-      $dateTaken = $exif['dateTaken'];
+    if(isset($attributes['date_taken']) && !empty($attributes['date_taken']))
+      $date_taken = $attributes['date_taken'];
+    elseif(isset($exif['date_taken']))
+      $date_taken = $exif['date_taken'];
     else
-      $dateTaken = time();
+      $date_taken = time();
 
-    $resp = $this->createAndStoreBaseAndOriginal($name, $localFile, $dateTaken, $allowAutoRotate);
+    $resp = $this->createAndStoreBaseAndOriginal($name, $localFile, $date_taken, $allowAutoRotate);
     $paths = $resp['paths'];
 
     $attributes = $this->whitelistParams($attributes);
@@ -879,14 +879,14 @@ class Photo extends Media
           $attributes[$mapName] = $exif[$paramName];
       }
 
-      if(isset($attributes['dateUploaded']) && !empty($attributes['dateUploaded']))
-        $dateUploaded = $attributes['dateUploaded'];
+      if(isset($attributes['date_uploaded']) && !empty($attributes['date_uploaded']))
+        $date_uploaded = $attributes['date_uploaded'];
       else
-        $dateUploaded = time();
+        $date_uploaded = time();
 
       if($this->config->photos->autoTagWithDate == 1)
       {
-        $dateTags = sprintf('%s,%s', date('F', $dateTaken), date('Y', $dateTaken));
+        $dateTags = sprintf('%s,%s', date('F', $date_taken), date('Y', $date_taken));
         if(!isset($attributes['tags']) || empty($attributes['tags']))
           $attributes['tags'] = $dateTags;
         else
@@ -912,19 +912,19 @@ class Photo extends Media
         array(
           'hash' => sha1_file($localFile), // fallback if not in $attributes
           'size' => intval(filesize($localFile)/1024),
-          'filenameOriginal' => $filenameOriginal,
+          'filename_original' => $filename_original,
           'width' => @$exif['width'],
           'height' => @$exif['height'],
-          'dateTaken' => $dateTaken,
-          'dateTakenDay' => date('d', $dateTaken),
-          'dateTakenMonth' => date('m', $dateTaken),
-          'dateTakenYear' => date('Y', $dateTaken),
-          'dateUploaded' => $dateUploaded,
-          'dateUploadedDay' => date('d', $dateUploaded),
-          'dateUploadedMonth' => date('m', $dateUploaded),
-          'dateUploadedYear' => date('Y', $dateUploaded),
-          'pathOriginal' => $paths['pathOriginal'],
-          'pathBase' => $paths['pathBase']
+          'date_taken' => $date_taken,
+          'date_taken_day' => date('d', $date_taken),
+          'date_taken_month' => date('m', $date_taken),
+          'date_taken_year' => date('Y', $date_taken),
+          'date_uploaded' => $date_uploaded,
+          'date_uploaded_day' => date('d', $date_uploaded),
+          'date_uploaded_month' => date('m', $date_uploaded),
+          'date_uploaded_year' => date('Y', $date_uploaded),
+          'path_original' => $paths['path_original'],
+          'path_base' => $paths['path_base']
         ),
         $attributes
       );
@@ -933,7 +933,7 @@ class Photo extends Media
       foreach($attributes as $key => $val)
         $attributes[$key] = $this->trim($val);
 
-      $stored = $this->db->putPhoto($id, $attributes, $dateTaken);
+      $stored = $this->db->putPhoto($id, $attributes, $date_taken);
       unlink($localFile);
       unlink($resp['localFileCopy']);
       if($stored)
@@ -981,7 +981,7 @@ class Photo extends Media
   private function getDefaultAttributes()
   {
     return array(
-      'appId' => $this->config->application->appId,
+      'app_id' => $this->config->application->app_id,
       'host' => $this->fs->getHost(),
       'views' => 0,
       'status' => 1,
@@ -1072,9 +1072,9 @@ class Photo extends Media
     return preg_replace('/^([ \r\n]+)|(\s+)$/', '', $string);
   }
 
-  private function createAndStoreBaseAndOriginal($name, $localFile, $dateTaken, $allowAutoRotate)
+  private function createAndStoreBaseAndOriginal($name, $localFile, $date_taken, $allowAutoRotate)
   {
-    $paths = $this->generatePaths($name, $dateTaken);
+    $paths = $this->generatePaths($name, $date_taken);
 
     // resize the base image before uploading
     $localFileCopy = "{$localFile}-copy";
@@ -1093,8 +1093,8 @@ class Photo extends Media
     $baseImage->write($localFileCopy, 'jpg');
     $uploaded = $this->fs->putPhotos(
       array(
-        array($localFile => array($paths['pathOriginal'], $dateTaken)),
-        array($localFileCopy => array($paths['pathBase'], $dateTaken))
+        array($localFile => array($paths['path_original'], $date_taken)),
+        array($localFileCopy => array($paths['path_base'], $date_taken))
       )
     );
 
@@ -1140,9 +1140,9 @@ class Photo extends Media
   private function whitelistParams($attributes)
   {
     $returnAttrs = array();
-    $matches = array('id' => 1,'host' => 1,'appId' => 1,'title' => 1,'description' => 1,'key' => 1,'hash' => 1,'tags' => 1,'size' => 1,'photo'=>1,'height' => 1,
+    $matches = array('id' => 1,'host' => 1,'app_id' => 1,'title' => 1,'description' => 1,'key' => 1,'hash' => 1,'tags' => 1,'size' => 1,'photo'=>1,'height' => 1,
       'rotation'=>1,'altitude' => 1, 'latitude' => 1,'longitude' => 1,'views' => 1,'status' => 1,'permission' => 1,'albums'=>1,'groups' => 1,'license' => 1,
-      'pathBase' => 1, 'pathOriginal' => 1, 'dateTaken' => 1, 'dateUploaded' => 1, 'filenameOriginal' => 1 /* TODO remove in 1.5.0, only used for upgrade */);
+      'path_base' => 1, 'path_original' => 1, 'date_taken' => 1, 'date_uploaded' => 1, 'filename_original' => 1 /* TODO remove in 1.5.0, only used for upgrade */);
     $patterns = array('exif.*','date.*','extra.*');
     foreach($attributes as $key => $val)
     {

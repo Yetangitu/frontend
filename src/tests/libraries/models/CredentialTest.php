@@ -130,7 +130,7 @@ class CredentialTest extends PHPUnit_Framework_TestCase
     $db = $this->getMock('Db', array('getCredential'));
     $db->expects($this->any())
       ->method('getCredential')
-      ->will($this->returnValue(array('status' => Credential::statusActive, 'clientSecret' => 'secret')));
+      ->will($this->returnValue(array('status' => Credential::statusActive, 'client_secret' => 'secret')));
     $this->credential->inject('db', $db);
     $this->credential->inject('provider', new FauxObject);
     
@@ -162,7 +162,7 @@ class CredentialTest extends PHPUnit_Framework_TestCase
     $db = $this->getMock('Db', array('getCredential'));
     $db->expects($this->any())
       ->method('getCredential')
-      ->will($this->returnValue(array('status' => Credential::statusInactive, 'clientSecret' => 'secret')));
+      ->will($this->returnValue(array('status' => Credential::statusInactive, 'client_secret' => 'secret')));
     $this->credential->inject('db', $db);
     $this->credential->inject('provider', new FauxObject);
     
@@ -276,7 +276,7 @@ class CredentialTest extends PHPUnit_Framework_TestCase
     $db = $this->getMock('Db', array('getCredential'));
     $db->expects($this->any())
       ->method('getCredential')
-      ->will($this->returnValue(array('type' => Credential::typeAccess, 'userSecret' => 'secret')));
+      ->will($this->returnValue(array('type' => Credential::typeAccess, 'user_secret' => 'secret')));
     $this->credential->inject('db', $db);
     $this->credential->inject('provider', new FauxObject);
     
@@ -315,7 +315,7 @@ class CredentialTest extends PHPUnit_Framework_TestCase
     $db = $this->getMock('Db', array('getCredential'));
     $db->expects($this->any())
       ->method('getCredential')
-      ->will($this->returnValue(array('type' => Credential::typeRequest, 'verifier' => 'verifier_mismatch', 'userSecret' => 'secret')));
+      ->will($this->returnValue(array('type' => Credential::typeRequest, 'verifier' => 'verifier_mismatch', 'user_secret' => 'secret')));
     $this->credential->inject('db', $db);
     $this->credential->inject('provider', new FauxObject);
     
@@ -328,7 +328,7 @@ class CredentialTest extends PHPUnit_Framework_TestCase
    */
   public function testGetConsumer()
   {
-    $expected = array('type' => Credential::typeRequest, 'verifier' => 'verifier_mismatch', 'userSecret' => 'secret', 'time' => time());
+    $expected = array('type' => Credential::typeRequest, 'verifier' => 'verifier_mismatch', 'user_secret' => 'secret', 'time' => time());
     $db = $this->getMock('Db', array('getCredential'));
     $db->expects($this->any())
       ->method('getCredential')

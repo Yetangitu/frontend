@@ -54,8 +54,8 @@ abstract class Media extends BaseModel
     $attributes = $this->setDateAttributes($attributes);
     $attributes = $this->setTagAttributes($attributes);
 
-    if(!empty($name) && (!isset($attributes['filenameOriginal']) || empty($attributes['filenameOriginal'])))
-      $attributes['filenameOriginal'] = $name;
+    if(!empty($name) && (!isset($attributes['filename_original']) || empty($attributes['filename_original'])))
+      $attributes['filename_original'] = $name;
 
     $attributes['owner'] = $this->owner;
     $attributes['actor'] = $this->getActor();
@@ -71,7 +71,7 @@ abstract class Media extends BaseModel
   public function requireDefaults($attributes)
   {
     $defaults = array(
-      'appId' => $this->config->application->appId, 
+      'app_id' => $this->config->application->app_id, 
       'host' => $this->fs->getHost(), 
       'title'=>null, 
       'description'=>null, 
@@ -88,18 +88,18 @@ abstract class Media extends BaseModel
 
   protected function setDateAttributes($attributes)
   {
-    if(!isset($attributes['dateTaken']) || empty($attributes['dateTaken']))
-      $attributes['dateTaken'] = time();
+    if(!isset($attributes['date_taken']) || empty($attributes['date_taken']))
+      $attributes['date_taken'] = time();
 
-    if(!isset($attributes['dateUploaded']) || empty($attributes['dateUploaded']))
-      $attributes['dateUploaded'] = time();
+    if(!isset($attributes['date_uploaded']) || empty($attributes['date_uploaded']))
+      $attributes['date_uploaded'] = time();
 
-    $attributes['dateTakenDay'] = date('d', $attributes['dateTaken']);
-    $attributes['dateTakenMonth'] = date('m', $attributes['dateTaken']);
-    $attributes['dateTakenYear'] = date('Y', $attributes['dateTaken']);
-    $attributes['dateUploadedDay'] = date('d', $attributes['dateUploaded']);
-    $attributes['dateUploadedMonth'] = date('m', $attributes['dateUploaded']);
-    $attributes['dateUploadedYear'] = date('Y', $attributes['dateUploaded']);
+    $attributes['date_taken_day'] = date('d', $attributes['date_taken']);
+    $attributes['date_taken_month'] = date('m', $attributes['date_taken']);
+    $attributes['date_taken_year'] = date('Y', $attributes['date_taken']);
+    $attributes['date_uploaded_day'] = date('d', $attributes['date_uploaded']);
+    $attributes['date_uploaded_month'] = date('m', $attributes['date_uploaded']);
+    $attributes['date_uploaded_year'] = date('Y', $attributes['date_uploaded']);
 
     return $attributes;
   }
@@ -174,8 +174,8 @@ abstract class Media extends BaseModel
     return array_merge(
       $attributes,
       array(
-        'pathOriginal' => $paths['pathOriginal'],
-        'pathBase' => isset($paths['pathBase']) ? $paths['pathBase'] : ''
+        'path_original' => $paths['path_original'],
+        'path_base' => isset($paths['path_base']) ? $paths['path_base'] : ''
       )
     );
 
@@ -202,7 +202,7 @@ abstract class Media extends BaseModel
     if($this->config->photos->autoTagWithDate != 1)
       return $attributes;
 
-    // in (Photo|Video)::update we might change dateTaken which means we have to remove old year/month tags
+    // in (Photo|Video)::update we might change date_taken which means we have to remove old year/month tags
     if(isset($attributes['tags']) && !empty($attributes['tags']))
     {
       $dateNames = array('January','February','March','April','May','June','July','August','September','October','November','December');
@@ -217,7 +217,7 @@ abstract class Media extends BaseModel
       $attributes['tags'] = implode(',', $tagsArray);
     }
 
-    $dateTags = sprintf('%s,%s', date('F', $attributes['dateTaken']), date('Y', $attributes['dateTaken']));
+    $dateTags = sprintf('%s,%s', date('F', $attributes['date_taken']), date('Y', $attributes['date_taken']));
     // TODO see if there's a shortcut for this
     if(!isset($attributes['tags']) || empty($attributes['tags']))
       $attributes['tags'] = $dateTags;
@@ -242,11 +242,11 @@ abstract class Media extends BaseModel
       'actor' => 1,
       'albums'=>1,
       'altitude' => 1,
-      'appId' => 1,
-      'dateTaken' => 1,
-      'dateUploaded' => 1,
+      'app_id' => 1,
+      'date_taken' => 1,
+      'date_uploaded' => 1,
       'description' => 1,
-      'filenameOriginal' => 1, /* TODO remove in 1.5.0, only used for upgrade */
+      'filename_original' => 1, /* TODO remove in 1.5.0, only used for upgrade */
       'host' => 1,
       'hash' => 1,
       'height' => 1,
@@ -257,8 +257,8 @@ abstract class Media extends BaseModel
       'license' => 1,
       'longitude' => 1,
       'owner' => 1,
-      'pathBase' => 1,
-      'pathOriginal' => 1,
+      'path_base' => 1,
+      'path_original' => 1,
       'permission' => 1,
       'rotation'=>1,
       'size' => 1,

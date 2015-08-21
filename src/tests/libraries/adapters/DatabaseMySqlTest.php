@@ -40,7 +40,7 @@ class DatabaseMySqlTest extends PHPUnit_Framework_TestCase
     $config = array(
       'mysql' => array('mySqlDb' => 'foo', 'mySqlHost' => 'bar', 'mySqlUser' => 'foo', 'mySqlPassword' => 'bar'),
       'user' => array('email' => 'test@example.com'),
-      'application' => array('appId' => 'fooId')
+      'application' => array('app_id' => 'fooId')
     );
     $config = arrayToObject($config);
     $params = array('db' => true);
@@ -132,7 +132,7 @@ class DatabaseMySqlTest extends PHPUnit_Framework_TestCase
     $db = $this->getMock('MySqlMock', array('one'));
     $db->expects($this->any())
       ->method('one')
-      ->will($this->returnValue(array('name' => 'unittest', 'countPublic' => '1')));
+      ->will($this->returnValue(array('name' => 'unittest', 'count_public' => '1')));
     $this->db->inject('db', $db);
 
     $res = $this->db->getAlbum('foo', 'test@example.com');
@@ -144,7 +144,7 @@ class DatabaseMySqlTest extends PHPUnit_Framework_TestCase
     $db = $this->getMock('MySqlMock', array('one'));
     $db->expects($this->any())
       ->method('one')
-      ->will($this->returnValue(array('name' => 'unittest', 'countPublic' => '1', 'extra' => json_encode(array('cover' => 'foo')))));
+      ->will($this->returnValue(array('name' => 'unittest', 'count_public' => '1', 'extra' => json_encode(array('cover' => 'foo')))));
     $this->db->inject('db', $db);
 
     $res = $this->db->getAlbum('foo', 'test@example.com');
@@ -156,12 +156,12 @@ class DatabaseMySqlTest extends PHPUnit_Framework_TestCase
     $db = $this->getMock('MySqlMock', array('one'));
     $db->expects($this->any())
       ->method('one')
-      ->will($this->returnValue(array('name' => 'unittest', 'countPublic' => '0')));
+      ->will($this->returnValue(array('name' => 'unittest', 'count_public' => '0')));
     $this->db->inject('db', $db);
     $this->db->inject('isAdmin', false);
 
     $res = $this->db->getAlbum('foo', 'email');
-    $this->assertFalse($res, 'The MySql adapter should return false when countPublic is 0 and non admin');
+    $this->assertFalse($res, 'The MySql adapter should return false when count_public is 0 and non admin');
   }
 
   public function testGetAlbumFailure()
@@ -210,7 +210,7 @@ class DatabaseMySqlTest extends PHPUnit_Framework_TestCase
     $db = $this->getMock('MySqlMock', array('one'));
     $db->expects($this->any())
       ->method('one')
-      ->will($this->returnValue(array('name' => 'unittest', 'countPublic' => '1')));
+      ->will($this->returnValue(array('name' => 'unittest', 'count_public' => '1')));
     $this->db->inject('db', $db);
 
     $res = $this->db->getAlbum('foo', 'test@example.com');
@@ -404,7 +404,7 @@ class DatabaseMySqlTest extends PHPUnit_Framework_TestCase
     $db = $this->getMock('MySqlMock', array('one'));
     $db->expects($this->any())
       ->method('one')
-      ->will($this->returnValue(MySqlMockHelper::getShareToken(array('dateExpires' => time()+100))));
+      ->will($this->returnValue(MySqlMockHelper::getShareToken(array('date_expires' => time()+100))));
     $this->db->inject('db', $db);
 
     $res = $this->db->getShareToken('foo');
@@ -416,7 +416,7 @@ class DatabaseMySqlTest extends PHPUnit_Framework_TestCase
     $db = $this->getMock('MySqlMock', array('one'));
     $db->expects($this->any())
       ->method('one')
-      ->will($this->returnValue(MySqlMockHelper::getShareToken(array('dateExpires' => 1))));
+      ->will($this->returnValue(MySqlMockHelper::getShareToken(array('date_expires' => 1))));
     $this->db->inject('db', $db);
 
     $res = $this->db->getShareToken('foo');

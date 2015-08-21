@@ -23,12 +23,12 @@ SQL;
 }
 
 $sql = <<<SQL
- ALTER TABLE `{$this->mySqlTablePrefix}album` ADD `countPublic` INT UNSIGNED NOT NULL DEFAULT '0' AFTER `extra` ;
+ ALTER TABLE `{$this->mySqlTablePrefix}album` ADD `count_public` INT UNSIGNED NOT NULL DEFAULT '0' AFTER `extra` ;
 SQL;
 mysql_4_0_0($sql);
 
 $sql = <<<SQL
- ALTER TABLE `activity` ADD `{$this->mySqlTablePrefix}elementId` VARCHAR( 6 ) NOT NULL AFTER `type` 
+ ALTER TABLE `activity` ADD `{$this->mySqlTablePrefix}element_id` VARCHAR( 6 ) NOT NULL AFTER `type` 
 SQL;
 mysql_4_0_0($sql);
 
@@ -36,7 +36,7 @@ $sql = <<<SQL
   CREATE TABLE IF NOT EXISTS `{$this->mySqlTablePrefix}relationship` (
     `actor` varchar(127) NOT NULL,
     `follows` varchar(127) NOT NULL,
-    `dateCreated` datetime NOT NULL,
+    `date_created` datetime NOT NULL,
     PRIMARY KEY (`actor`,`follows`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 SQL;
@@ -63,7 +63,7 @@ SQL;
 $status = $status && mysql_4_0_0($sql);
 
 $sql = <<<SQL
-  ALTER TABLE `{$this->mySqlTablePrefix}album` ADD `countPrivate` INT( 10 ) NOT NULL DEFAULT '0' AFTER `countPublic` ;
+  ALTER TABLE `{$this->mySqlTablePrefix}album` ADD `count_private` INT( 10 ) NOT NULL DEFAULT '0' AFTER `count_public` ;
 SQL;
 $status = $status && mysql_4_0_0($sql);
 
@@ -99,7 +99,7 @@ $sql = <<<SQL
     `actor` VARCHAR( 127 ) NOT NULL ,
     `type` ENUM( 'album', 'photo', 'photos', 'video' ) NOT NULL ,
     `data` VARCHAR( 255 ) NOT NULL ,
-    `dateExpires` INT UNSIGNED NOT NULL ,
+    `date_expires` INT UNSIGNED NOT NULL ,
     PRIMARY KEY ( `owner` , `id` ),
     UNIQUE KEY `owner` (`owner`,`type`,`data`)
   ) ENGINE = InnoDB;

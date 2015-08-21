@@ -87,7 +87,7 @@
   
   _.extend( Lightbox.prototype, Backbone.Events, {
 	
-    imagePathKey : 'pathBase',
+    imagePathKey : 'path_base',
     
     _initialize : function(){
       if( this._initialized ) return;
@@ -320,7 +320,7 @@
         $photo.removeClass('last');
         
       // set the title to include the photo's title
-      $title.html(TBX.format.sprintf('%s / Photo / %s / Trovebox', TBX.profiles.getOwnerUsername(), this.model.get('title') || this.model.get('filenameOriginal')));
+      $title.html(TBX.format.sprintf('%s / Photo / %s / Trovebox', TBX.profiles.getOwnerUsername(), this.model.get('title') || this.model.get('filename_original')));
 
       if( !(c = this.cache[this.model.get('id')]) ){
         var c = this.cache[this.model.get('id')] = new Image();

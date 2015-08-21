@@ -66,13 +66,13 @@ class Tag extends BaseModel
   public function getTag($tag = null)
   {
     $userObj = new User;
-    $tagField = $userObj->isAdmin() ? 'countPrivate' : 'countPublic';
+    $tagField = $userObj->isAdmin() ? 'count_private' : 'count_public';
     $tag = $this->db->getTag($tag);
     if(!$tag || $tag[$tagField] == 0)
       return false;
 
     $tag['count'] = intval($tag[$tagField]);
-    unset($tag['countPrivate'], $tag['countPublic']);
+    unset($tag['count_private'], $tag['count_public']);
     return $tag;
   }
 
@@ -150,7 +150,7 @@ class Tag extends BaseModel
 
   public function validateParams($params)
   {
-    $fields = array('countPrivate' => 1, 'countPublic' => 1);
+    $fields = array('count_private' => 1, 'count_public' => 1);
     $noSql = array('email' => 1, 'latitude' => 1, 'longitude' => 1);
     $json = null;
     foreach($params as $key => $param)

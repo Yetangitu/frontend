@@ -12,7 +12,7 @@ if(!class_exists('Facebook'))
 
 class LoginFacebook implements LoginInterface
 {
-  private $isActive, $fb, $appId, $appSecret;
+  private $isActive, $fb, $app_id, $appSecret;
   public function __construct()
   {
     // requires the FacebookConnect plugin to be enabled
@@ -25,7 +25,7 @@ class LoginFacebook implements LoginInterface
         $conf = getPlugin()->loadConf('FacebookConnectHosted');
       $this->id = $conf['id'];
       $this->secret = $conf['secret'];
-      $this->fb = new Facebook(array('appId' => $this->id, 'secret' => $this->secret));
+      $this->fb = new Facebook(array('app_id' => $this->id, 'secret' => $this->secret));
     }
   }
 

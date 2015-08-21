@@ -69,7 +69,7 @@ class OAuthController extends BaseController
     }
 
     $consumer = getDb()->getCredential($consumerKey);
-    $token = $consumer['userToken'];
+    $token = $consumer['user_token'];
 
     $tokenType = Credential::typeRequest;
     if(isset($_POST['tokenType']) && $_POST['tokenType'] === 'access')
@@ -94,7 +94,7 @@ class OAuthController extends BaseController
       if(stripos($callback, '?') !== false)
         $separator = '&';
     }
-    $callback .= "{$separator}oauth_consumer_key={$consumer['id']}&oauth_consumer_secret={$consumer['clientSecret']}&oauth_token={$consumer['userToken']}&oauth_token_secret={$consumer['userSecret']}&oauth_verifier={$consumer['verifier']}";
+    $callback .= "{$separator}oauth_consumer_key={$consumer['id']}&oauth_consumer_secret={$consumer['client_secret']}&oauth_token={$consumer['user_token']}&oauth_token_secret={$consumer['user_secret']}&oauth_verifier={$consumer['verifier']}";
     $this->route->redirect($callback, null, true);
   }
 
@@ -189,7 +189,7 @@ class OAuthController extends BaseController
     {
       getCredential()->convertToken($consumer['id'], Credential::typeAccess);
       $consumer = getDb()->getCredentialByUserToken($token);
-      printf('oauth_token=%s&oauth_token_secret=%s', $consumer['userToken'], $consumer['userSecret']);
+      printf('oauth_token=%s&oauth_token_secret=%s', $consumer['user_token'], $consumer['user_secret']);
     }
   }
 

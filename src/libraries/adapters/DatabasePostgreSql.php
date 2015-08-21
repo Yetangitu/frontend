@@ -1,18 +1,18 @@
 <?php
 /**
- * MySQL implementation
+ * PostgreSQL implementation
  *
- * This class defines the functionality defined by DatabaseInterface for a MySQL database.
- * It use EpiDatabase.
- * @author Hub Figuiere <hub@figuiere.net>
+ * This class defines the functionality defined by DatabaseInterface for a PostgreSQL database.
+ * It uses (a slightly patched) EpiDatabase.
+ * @author Frank de Lange <openphoto-f@unternet.org>, Hub Figuiere <hub@figuiere.net>
  */
-class DatabaseMySql implements DatabaseInterface
+class DatabasePostgreSql implements DatabaseInterface
 {
   /**
     * Member variables holding the names to the SimpleDb domains needed and the database object itself.
     * @access private
     */
-  private $actor, $cache = array(), $config, $errors = array(), $isOwner, $isAdmin, $owner, $mySqlDb, $mySqlHost, $mySqlUser, $mySqlPassword, $mySqlTablePrefix;
+  private $actor, $cache = array(), $config, $errors = array(), $isOwner, $isAdmin, $owner, $postgreSqlDb, $postgreSqlHost, $postgreSqlUser, $postgreSqlPassword, $postgreSqlTablePrefix;
 
   /**
     * Constructor
@@ -22,7 +22,7 @@ class DatabaseMySql implements DatabaseInterface
   public function __construct($config = null, $params = null)
   {
     $this->config = !is_null($config) ? $config : getConfig()->get();
-    $mysql = $this->config->mysql;
+    $postgresql = $this->config->postgresql;
 
     if(!is_null($params) && isset($params['db']))
     {
@@ -31,12 +31,16 @@ class DatabaseMySql implements DatabaseInterface
     else
     {
       $utilityObj = new Utility;
-      EpiDatabase::employ('mysql', $mysql->mySqlDb,
-                          $mysql->mySqlHost, $mysql->mySqlUser, $utilityObj->decrypt($mysql->mySqlPassword));
+      EpiDatabase::employ('pgsql',
+                          $postgresql->postgreSqlDb,
+                          $postgresql->postgreSqlHost,
+                          $postgresql->postgreSqlUser,
+                          $utilityObj->decrypt($postgresql->postgreSqlPassword));
+
       $this->db = getDatabase();
     }
 
-    foreach($mysql as $key => $value)
+    foreach($postgresql as $key => $value)
     {
       $this->{$key} = $value;
     }
@@ -53,7 +57,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function deleteAction($id)
   {
-    $res = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}action` WHERE `id`=:id AND `owner`=:owner", array(':id' => $id, ':owner' => $this->owner));
+    $res = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}action WHERE id=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
     return ($res !== false);
   }
 
@@ -64,7 +68,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function deleteActivities()
   {
-    $result = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}activity` WHERE `owner`=:owner", array(':owner' => $this->owner));
+    $result = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}activity WHERE owner=:owner", array(':owner' => $this->owner));
     return ($result !== false);
   }
 
@@ -82,7 +86,7 @@ class DatabaseMySql implements DatabaseInterface
       $types[$key] = $this->_($val);
     
     $typesStr = "'".implode("','", $types)."'";
-    $result = $this->db->execute($sql = "DELETE FROM `{$this->mySqlTablePrefix}activity` WHERE `owner`=:owner AND `type` IN({$typesStr}) AND `element_id`=:element_id", 
+    $result = $this->db->execute($sql = "DELETE FROM {$this->postgreSqlTablePrefix}activity WHERE owner=:owner AND type IN({$typesStr}) AND element_id=:element_id", 
       array(':owner' => $this->owner, ':element_id' => $element_id));
     return ($result !== false);
   }
@@ -95,14 +99,8 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function deleteAlbum($id)
   {
-    // if one fails then don't continue by using the second condition
-    $res1 = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}album` WHERE `id`=:id AND `owner`=:owner", array(':id' => $id, ':owner' => $this->owner));
-    $res2 = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}elementAlbum` WHERE `owner`=:owner AND `album`=:album", array(':owner' => $this->owner, ':album' => $id));
-
-    if($res1 === false || $res2 === false)
-      return false;
-
-    return true;
+    $result = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}album WHERE id=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
+    return ($result !== false);
   }
 
   /**
@@ -112,7 +110,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function deleteCredential($id)
   {
-    $res = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}credential` WHERE `id`=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
+    $res = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}credential WHERE id=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
     return ($res !== false);
   }
 
@@ -124,12 +122,18 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function deleteGroup($id)
   {
-    $res = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}group` WHERE `id`=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
+    $res = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}group WHERE id=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
     return ($res !== false);
   }
 
   /**
     * Delete a photo in it's entirety from the database
+		*
+		* NOTE: this does NOT delete the photo, it merely sets the active property to 0
+		*				as long as the physical files are not deleted, undelete is possible
+		*				On undelete, all tags and album relations are restored.
+		*				Undelete is currently not exposed in the API, but it can be performed
+		*				manually by setting the active property to 1.
     *
     * @param string $id ID of the photo to delete
     * @return boolean
@@ -139,12 +143,9 @@ class DatabaseMySql implements DatabaseInterface
     if(!isset($photo['id']))
       return false;
 
-    $resPhoto = $this->db->execute("UPDATE `{$this->mySqlTablePrefix}photo` SET `active`=0 WHERE `id`=:id AND owner=:owner", array(':id' => $photo['id'], ':owner' => $this->owner));
+    $result = $this->db->execute("UPDATE {$this->postgreSqlTablePrefix}photo SET active=0 WHERE id=:id AND owner=:owner", array(':id' => $photo['id'], ':owner' => $this->owner));
 
-    $this->setActiveFieldForAlbumsFromElement($photo['id'], 'photo', 0);
-    $this->setActiveFieldForTagsFromElement($photo['id'], 'photo', 0);
-
-    return $resPhoto !== false;
+    return ($result !== false);
   }
 
   /**
@@ -158,7 +159,7 @@ class DatabaseMySql implements DatabaseInterface
     if(!isset($photo['id']))
       return false;
 
-    $res = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}photoVersion` WHERE `owner`=:owner AND `id`=:id", array(':id' => $photo['id'], ':owner' => $this->owner));
+    $res = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}photoVersion WHERE owner=:owner AND id=:id", array(':id' => $photo['id'], ':owner' => $this->owner));
     return $res !== false;
   }
 
@@ -170,7 +171,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function deleteRelationship($target)
   {
-    $res = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}relationship` WHERE `actor`=:actor AND `follows`=:follows", array(':actor' => $this->getActor(), ':follows' => $target));
+    $res = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}relationship WHERE actor=:actor AND follows=:follows", array(':actor' => $this->getActor(), ':follows' => $target));
     return $res !== 1;
   }
 
@@ -182,7 +183,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function deleteShareToken($id)
   {
-    $res = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}shareToken` WHERE `owner`=:owner AND `id`=:id", array(':owner' => $this->owner, ':id' => $id));
+    $res = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}shareToken WHERE owner=:owner AND id=:id", array(':owner' => $this->owner, ':id' => $id));
     return $res !== false;
   }
 
@@ -194,9 +195,9 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function deleteTag($id)
   {
-    $resDel = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}tag` WHERE `id`=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
-    $resClean = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}elementTag` WHERE `owner`=:owner AND `tag`=:tag", array(':owner' => $this->owner, ':tag' => $id));
-    return ($resDel !== false);
+    $result = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}tag WHERE id=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
+  
+    return ($result !== false);
   }
 
   /**
@@ -207,7 +208,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function deleteWebhook($id)
   {
-    $res = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}webhook` WHERE `id`=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
+    $res = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}webhook WHERE id=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
     return ($res !== false);
   }
 
@@ -220,7 +221,7 @@ class DatabaseMySql implements DatabaseInterface
   {
     $utilityObj = new Utility;
     $diagnostics = array();
-    $res = $this->db->execute("SELECT * FROM `{$this->mySqlTablePrefix}photo` WHERE owner=:owner LIMIT 1", array(':owner' => $this->owner));
+    $res = $this->db->execute("SELECT * FROM {$this->postgreSqlTablePrefix}photo WHERE owner=:owner LIMIT 1", array(':owner' => $this->owner));
     if($res == 1)
       $diagnostics[] = $utilityObj->diagnosticLine(true, 'Database connectivity is okay.');
     else
@@ -246,7 +247,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function executeScript($file, $database)
   {
-    if($database != 'mysql')
+    if($database != 'postgresql')
       return;
 
     return include $file;
@@ -260,7 +261,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getAction($id)
   {
-    $action = $this->db->one("SELECT * FROM `{$this->mySqlTablePrefix}action` WHERE `id`=:id AND owner=:owner",
+    $action = $this->db->one("SELECT * FROM {$this->postgreSqlTablePrefix}action WHERE id=:id AND owner=:owner",
                                array(':id' => $id, ':owner' => $this->owner));
     if(empty($action))
       return false;
@@ -277,8 +278,7 @@ class DatabaseMySql implements DatabaseInterface
   {
     $filters['sortBy'] = 'date_created,desc';
     $buildQuery = $this->buildQuery($filters, $limit, null, 'activity');
-    $activities = $this->db->all($sql = "SELECT * FROM `{$this->mySqlTablePrefix}activity` {$buildQuery['where']} {$buildQuery['sortBy']} {$buildQuery['limit']}",
-                               array(':owner' => $this->owner));
+    $activities = $this->db->all($sql = "SELECT * FROM {$this->postgreSqlTablePrefix}activity {$buildQuery['where']} {$buildQuery['sortBy']} {$buildQuery['limit']}", array());
     if($activities === false)
       return false;
 
@@ -296,7 +296,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getActivity($id)
   {
-    $activity = $this->db->all("SELECT * FROM `{$this->mySqlTablePrefix}activity` WHERE `id`=:id AND `owner`=:owner",
+    $activity = $this->db->all("SELECT * FROM {$this->postgreSqlTablePrefix}activity WHERE id=:id AND owner=:owner",
                                array(':id' => $id, ':owner' => $this->owner));
     if($activity === false)
       return false;
@@ -315,7 +315,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getAlbum($id, $email, $validatedPermission = false)
   {
-    $album = $this->db->one("SELECT * FROM `{$this->mySqlTablePrefix}album` WHERE `owner`=:owner AND `id`=:id ",
+    $album = $this->db->one("SELECT * FROM {$this->postgreSqlTablePrefix}album WHERE owner=:owner AND id=:id ",
       array(':id' => $id, ':owner' => $this->owner));
 
     // we return false if we don't get an album or
@@ -340,7 +340,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getAlbumByName($name, $email)
   {
-    $album = $this->db->one("SELECT * FROM `{$this->mySqlTablePrefix}album` WHERE `owner`=:owner AND `name`=:name ",
+    $album = $this->db->one("SELECT * FROM {$this->postgreSqlTablePrefix}album WHERE owner=:owner AND name=:name ",
       array(':owner' => $email, ':name' => $name));
 
     if($album === false)
@@ -360,11 +360,14 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getAlbumElements($id)
   {
-    $photos = $this->db->all("SELECT `pht`.* 
-      FROM `{$this->mySqlTablePrefix}photo` AS `pht` INNER JOIN `{$this->mySqlTablePrefix}elementAlbum` AS `alb` ON `pht`.`id`=`alb`.`element`
-      WHERE `pht`.`owner`=:owner AND `alb`.`owner`=:owner
-      AND `alb`.`album`=:album",
+/*    $photos = $this->db->all("SELECT pht.* 
+      FROM {$this->postgreSqlTablePrefix}photo AS pht INNER JOIN {$this->postgreSqlTablePrefix}elementAlbum AS alb ON pht.id=alb.element
+      WHERE pht.owner=:owner AND alb.owner=:owner
+      AND alb.album=:album",
+      array(':owner' => $this->owner, ':album' => $id)); */
+    $photos = $this->db->all("SELECT * FROM {$this->postgreSqlTablePrefix}album_element_view WHERE owner=:owner AND album_id=:album",
       array(':owner' => $this->owner, ':album' => $id));
+
 
     if($photos === false)
       return false;
@@ -382,7 +385,6 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getAlbums($email, $limit = null, $offset = null)
   {
-    // TODO jmathai, confirm MySql is optimized for a high LIMIT
     if($limit === null)
       $limit = 10;
     elseif($limit === 0)
@@ -393,13 +395,13 @@ class DatabaseMySql implements DatabaseInterface
 
     if(!empty($email) && ($this->owner === $email || $this->getActor() === $email))
     {
-      $albums = $this->db->all("SELECT * FROM `{$this->mySqlTablePrefix}album` WHERE `owner`=:owner ORDER BY `name` LIMIT {$offset}, {$limit}", array(':owner' => $this->owner));
-      $albumsCount = $this->db->one("SELECT COUNT(*) FROM `{$this->mySqlTablePrefix}album` WHERE `owner`=:owner ORDER BY `name`", array(':owner' => $this->owner));
+      $albums = $this->db->all("SELECT * FROM {$this->postgreSqlTablePrefix}album WHERE owner=:owner ORDER BY name LIMIT {$limit} OFFSET {$offset}", array(':owner' => $this->owner));
+      $albumsCount = $this->db->one("SELECT COUNT(*) AS count FROM {$this->postgreSqlTablePrefix}album WHERE owner=:owner", array(':owner' => $this->owner));
     }
     else
     {
-      $albums = $this->db->all("SELECT * FROM `{$this->mySqlTablePrefix}album` WHERE `owner`=:owner AND `count_public`>0 ORDER BY `name` LIMIT {$offset}, {$limit}", array(':owner' => $this->owner));
-      $albumsCount = $this->db->one("SELECT COUNT(*) FROM `{$this->mySqlTablePrefix}album` WHERE `owner`=:owner AND `count_public`>0 ORDER BY `name` LIMIT {$offset}, {$limit}", array(':owner' => $this->owner));
+      $albums = $this->db->all("SELECT * FROM {$this->postgreSqlTablePrefix}album WHERE owner=:owner AND count_public>0 ORDER BY name LIMIT {$limit} OFFSET {$offset}", array(':owner' => $this->owner));
+      $albumsCount = $this->db->one("SELECT COUNT(*) AS count FROM {$this->postgreSqlTablePrefix}album WHERE owner=:owner AND count_public>0 LIMIT {$limit} OFFSET {$offset}", array(':owner' => $this->owner));
     }
 
     if($albums === false)
@@ -409,7 +411,7 @@ class DatabaseMySql implements DatabaseInterface
       $albums[$key] = $this->normalizeAlbum($album);
     
     if(!empty($albums))
-      $albums[0]['totalRows'] = intval($albumsCount['COUNT(*)']);
+      $albums[0]['totalRows'] = intval($albumsCount['count']);
 
     return $albums;
   }
@@ -422,7 +424,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getCredential($id)
   {
-    $cred = $this->db->one("SELECT * FROM `{$this->mySqlTablePrefix}credential` WHERE `id`=:id AND owner=:owner",
+    $cred = $this->db->one("SELECT * FROM {$this->postgreSqlTablePrefix}credential WHERE id=:id AND owner=:owner",
                                array(':id' => $id, ':owner' => $this->owner));
     if(empty($cred))
     {
@@ -439,7 +441,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getCredentialByUserToken($user_token)
   {
-    $cred = $this->db->one("SELECT * FROM `{$this->mySqlTablePrefix}credential` WHERE user_token=:user_token AND owner=:owner",
+    $cred = $this->db->one("SELECT * FROM {$this->postgreSqlTablePrefix}credential WHERE user_token=:user_token AND owner=:owner",
                                array(':user_token' => $user_token, ':owner' => $this->owner));
     if(empty($cred))
     {
@@ -455,8 +457,8 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getCredentials()
   {
-    $res = $this->db->all("SELECT * FROM `{$this->mySqlTablePrefix}credential` WHERE owner=:owner AND status=1
-						   ORDER BY `date_created` DESC", 
+    $res = $this->db->all("SELECT * FROM {$this->postgreSqlTablePrefix}credential WHERE owner=:owner AND status=1
+						   ORDER BY date_created DESC", 
 						   array(':owner' => $this->owner));
     if($res === false)
     {
@@ -481,7 +483,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getGroup($id = null)
   {
-    $res = $this->db->all("SELECT grp.*, memb.email FROM `{$this->mySqlTablePrefix}group` AS grp LEFT JOIN `{$this->mySqlTablePrefix}groupMember` AS memb ON `grp`.`owner`=`memb`.`owner` WHERE `grp`.`id`=:id AND `grp`.`owner`=:owner", array(':id' => $id ,':owner' => $this->owner));
+    $res = $this->db->all("SELECT grp.*, memb.email FROM {$this->postgreSqlTablePrefix}group AS grp LEFT JOIN {$this->postgreSqlTablePrefix}groupMember AS memb ON grp.owner=memb.owner WHERE grp.id=:id AND grp.owner=:owner", array(':id' => $id ,':owner' => $this->owner));
     if($res === false || empty($res))
       return false;
 
@@ -505,17 +507,17 @@ class DatabaseMySql implements DatabaseInterface
   {
 
     if(empty($email))
-      $res = $this->db->all("SELECT `grp`.*, `memb`.`email` 
-        FROM `{$this->mySqlTablePrefix}group` AS `grp` 
-        LEFT JOIN `{$this->mySqlTablePrefix}groupMember` AS `memb` ON `grp`.`owner`=`memb`.`owner` AND `grp`.`id`=`memb`.`group` 
-        WHERE `grp`.`id` IS NOT NULL AND `grp`.`owner`=:owner 
-        ORDER BY `grp`.`name`", array(':owner' => $this->owner));
+      $res = $this->db->all("SELECT grp.*, memb.email 
+        FROM {$this->postgreSqlTablePrefix}group AS grp 
+        LEFT JOIN {$this->postgreSqlTablePrefix}groupMember AS memb ON grp.owner=memb.owner AND grp.id=memb.group 
+        WHERE grp.id IS NOT NULL AND grp.owner=:owner 
+        ORDER BY grp.name", array(':owner' => $this->owner));
     else
-      $res = $this->db->all("SELECT `grp`.*, `memb`.`email` 
-        FROM `{$this->mySqlTablePrefix}group` AS `grp` 
-        LEFT JOIN `{$this->mySqlTablePrefix}groupMember` AS `memb` ON `grp`.`owner`=`memb`.`owner` AND `grp`.`id`=`memb`.`group` 
-        WHERE `memb`.`email`=:email AND `grp`.`id` IS NOT NULL AND `grp`.`owner`=:owner 
-        ORDER BY `grp`.`name`", array(':email' => $email, ':owner' => $this->owner));
+      $res = $this->db->all("SELECT grp.*, memb.email 
+        FROM {$this->postgreSqlTablePrefix}group AS grp 
+        LEFT JOIN {$this->postgreSqlTablePrefix}groupMember AS memb ON grp.owner=memb.owner AND grp.id=memb.group 
+        WHERE memb.email=:email AND grp.id IS NOT NULL AND grp.owner=:owner 
+        ORDER BY grp.name", array(':email' => $email, ':owner' => $this->owner));
 
     if($res !== false)
     {
@@ -550,11 +552,11 @@ class DatabaseMySql implements DatabaseInterface
   {
     if($this->isAdmin())
     {
-      $photo = $this->db->one("SELECT * FROM `{$this->mySqlTablePrefix}photo` WHERE owner=:owner AND `id`=:id", array(':id' => $id, ':owner' => $this->owner));
+      $photo = $this->db->one("SELECT * FROM {$this->postgreSqlTablePrefix}photo WHERE owner=:owner AND id=:id", array(':id' => $id, ':owner' => $this->owner));
     }
     else
     {
-      $photo = $this->db->one("SELECT * FROM `{$this->mySqlTablePrefix}photo` WHERE owner=:owner AND `id`=:id AND `active`=1", array(':id' => $id, ':owner' => $this->owner));
+      $photo = $this->db->one("SELECT * FROM {$this->postgreSqlTablePrefix}photo WHERE owner=:owner AND id=:id AND active=1", array(':id' => $id, ':owner' => $this->owner));
     }
 
     // TODO: gh-1455 get tags and albums from mapping table
@@ -572,7 +574,7 @@ class DatabaseMySql implements DatabaseInterface
   public function getPhotoByKey($key)
   {
     // TODO: unsure if this should be viewable to owner/admin gh-1453
-    $photo = $this->db->one("SELECT * FROM `{$this->mySqlTablePrefix}photo` WHERE owner=:owner AND `key`=:key", array(':owner' => $this->owner, ':key' => $key));
+    $photo = $this->db->one("SELECT * FROM {$this->postgreSqlTablePrefix}photo WHERE owner=:owner AND key=:key", array(':owner' => $this->owner, ':key' => $key));
     if(empty($photo))
       return false;
     return $this->normalizePhoto($photo);
@@ -586,7 +588,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getPhotoAlbums($id)
   {
-    $albums = $this->db->all("SELECT `album` FROM `{$this->mySqlTablePrefix}elementAlbum` WHERE `owner`=:owner AND `type`=:type AND `element`=:element", array(':owner' => $this->owner, ':element' => $id, ':type' => 'photo'));
+    $albums = $this->db->all("SELECT album FROM {$this->postgreSqlTablePrefix}elementAlbum WHERE owner=:owner AND type=:type AND element=:element", array(':owner' => $this->owner, ':element' => $id, ':type' => 'photo'));
     $retval = array();
     foreach($albums as $album)
       $retval[] = $album['album'];
@@ -611,7 +613,7 @@ class DatabaseMySql implements DatabaseInterface
     // determine where to start
     // this should return the immediately adjacent photo prior to $photo
     // if there are none we set it to the current photo and only get a next
-    $sortBy = '`date_sort_by_day` ASC, `id` ASC';
+    $sortBy = 'date_sort_by_day ASC, id ASC';
     $sortColumn = 'date_sort_by_day';
     $sortOperator = '<';
     $invSortOperator = '>=';
@@ -639,7 +641,7 @@ class DatabaseMySql implements DatabaseInterface
 
     // first we reverse the current order starting with the photo before $id and pick 2 since we get 5 total
     //  p p c n n (where c is the current photo, p are previous and n are next 
-    $startResp = $this->db->all($sql = "SELECT `id`, `date_taken`, `date_uploaded`, `date_sort_by_day` FROM `{$this->mySqlTablePrefix}photo` {$buildQuery['where']} AND `{$sortColumn}` {$sortOperator} :sortColumn {$buildQuery['groupBy']} ORDER BY `{$sortColumn}` {$invSortDirection}, `id` {$invSortDirection} LIMIT 2", 
+    $startResp = $this->db->all($sql = "SELECT id, date_taken, date_uploaded, date_sort_by_day FROM {$this->postgreSqlTablePrefix}photo {$buildQuery['where']} AND {$sortColumn} {$sortOperator} :sortColumn {$buildQuery['groupBy']} ORDER BY {$sortColumn} {$invSortDirection}, id {$invSortDirection} LIMIT 2", 
       array(':sortColumn' => $photo[$sortColumn]));
 
     // these two are in reverse order where it goes 2 1
@@ -655,9 +657,9 @@ class DatabaseMySql implements DatabaseInterface
     // we reverse the sort so it's the oldest first then select everything after the 
     // photo immediately older than this one
     $photosNextPrev = $this->db->all(
-      $sql = " SELECT `{$this->mySqlTablePrefix}photo`.*
+      $sql = " SELECT {$this->postgreSqlTablePrefix}photo.*
         {$buildQuery['from']}
-        {$buildQuery['where']} AND `{$sortColumn}` {$invSortOperator} :startValue
+        {$buildQuery['where']} AND {$sortColumn} {$invSortOperator} :startValue
         {$buildQuery['groupBy']}
         ORDER BY {$sortBy}
         LIMIT 5", 
@@ -700,7 +702,7 @@ class DatabaseMySql implements DatabaseInterface
     $photo['actions'] = array();
     if($photo)
     {
-      $actions = $this->db->all("SELECT * FROM `{$this->mySqlTablePrefix}action` WHERE owner=:owner AND target_type='photo' AND target_id=:id",
+      $actions = $this->db->all("SELECT * FROM {$this->postgreSqlTablePrefix}action WHERE owner=:owner AND target_type='photo' AND target_id=:id",
       	       array(':id' => $id, ':owner' => $this->owner));
       if(!empty($actions))
       {
@@ -721,7 +723,7 @@ class DatabaseMySql implements DatabaseInterface
   {
     $query = $this->buildQuery($filters, $limit, $offset, 'photo');
     // buildQuery includes owner
-    $photos = $this->db->all($sql = "SELECT {$this->mySqlTablePrefix}photo.* {$query['from']} {$query['where']} {$query['groupBy']} {$query['sortBy']} {$query['limit']} {$query['offset']}");
+    $photos = $this->db->all($sql = "SELECT {$this->postgreSqlTablePrefix}photo.* {$query['from']} {$query['where']} {$query['groupBy']} {$query['sortBy']} {$query['limit']} {$query['offset']}");
     if($photos === false)
       return false;
 
@@ -729,12 +731,12 @@ class DatabaseMySql implements DatabaseInterface
       $photos[$i] = $this->normalizePhoto($photos[$i]);
 
     // TODO evaluate SQL_CALC_FOUND_ROWS (indexes with the query builder might be hard to optimize)
-    // http://www.mysqlperformanceblog.com/2007/08/28/to-sql_calc_found_rows-or-not-to-sql_calc_found_rows/
+    // http://www.postgresqlperformanceblog.com/2007/08/28/to-sql_calc_found_rows-or-not-to-sql_calc_found_rows/
 
     if(!empty($photos))
     {
       $result = $this->db->one("SELECT COUNT(*) {$query['from']} {$query['where']} {$query['groupBy']}");
-      $photos[0]['totalRows'] = intval($result['COUNT(*)']);
+      $photos[0]['totalRows'] = intval($result['count']);
     }
 
     return $photos;
@@ -748,7 +750,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getResourceMap($id)
   {
-    $resourceMap = $this->db->one("SELECT * FROM `{$this->mySqlTablePrefix}resourceMap` WHERE `owner`=:owner AND `id`=:id", array(':owner' => $this->owner, ':id' => $id));
+    $resourceMap = $this->db->one("SELECT * FROM {$this->postgreSqlTablePrefix}resourceMap WHERE owner=:owner AND id=:id", array(':owner' => $this->owner, ':id' => $id));
     if(!$resourceMap)
       return false;
 
@@ -764,7 +766,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getRelationship($target)
   {
-    $relationship = $this->db->one("SELECT * FROM `{$this->mySqlTablePrefix}relationship` WHERE `actor`=:actor AND `follows`=:follows", array(':actor' => $this->getActor(), ':follows' => $target));
+    $relationship = $this->db->one("SELECT * FROM {$this->postgreSqlTablePrefix}relationship WHERE actor=:actor AND follows=:follows", array(':actor' => $this->getActor(), ':follows' => $target));
     return $relationship;
   }
 
@@ -776,7 +778,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getShareToken($id)
   {
-    $token = $this->db->one("SELECT * FROM `{$this->mySqlTablePrefix}shareToken` WHERE `owner`=:owner AND `id`=:id", array(':owner' => $this->owner, ':id' => $id));
+    $token = $this->db->one("SELECT * FROM {$this->postgreSqlTablePrefix}shareToken WHERE owner=:owner AND id=:id", array(':owner' => $this->owner, ':id' => $id));
 
     if(!$token)
       return false;
@@ -798,9 +800,9 @@ class DatabaseMySql implements DatabaseInterface
   public function getShareTokens($type = null, $data = null)
   {
     if($type === null && $data === null)
-      $tokens = $this->db->all("SELECT * FROM `{$this->mySqlTablePrefix}shareToken` WHERE `owner`=:owner", array(':owner' => $this->owner));
+      $tokens = $this->db->all("SELECT * FROM {$this->postgreSqlTablePrefix}shareToken WHERE owner=:owner", array(':owner' => $this->owner));
     else
-      $tokens = $this->db->all("SELECT * FROM `{$this->mySqlTablePrefix}shareToken` WHERE `owner`=:owner AND `type`=:type AND `data`=:data", array(':owner' => $this->owner, ':type' => $type, ':data' => $data));
+      $tokens = $this->db->all("SELECT * FROM {$this->postgreSqlTablePrefix}shareToken WHERE owner=:owner AND type=:type AND data=:data", array(':owner' => $this->owner, ':type' => $type, ':data' => $data));
 
     if($tokens === false)
       return false;
@@ -821,8 +823,8 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getStorageUsed()
   {
-    $res = $this->db->one("SELECT SUM(`size`) AS `KB` FROM `{$this->mySqlTablePrefix}photo` WHERE owner=:owner", array(':owner' => $this->owner));
-    return $res['KB'];
+    $res = $this->db->one("SELECT SUM(size) AS kb FROM {$this->postgreSqlTablePrefix}photo WHERE owner=:owner", array(':owner' => $this->owner));
+    return $res['kb'];
   }
 
   /**
@@ -834,7 +836,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getTag($tag)
   {
-    $tag = $this->db->one("SELECT * FROM `{$this->mySqlTablePrefix}tag` WHERE `owner`=:owner AND `id`=:id", array(':owner' => $this->owner, ':id' => $tag));
+    $tag = $this->db->one("SELECT * FROM {$this->postgreSqlTablePrefix}tag WHERE owner=:owner AND id=:id", array(':owner' => $this->owner, ':id' => $tag));
 
     if(!$tag )
       return false;
@@ -856,13 +858,13 @@ class DatabaseMySql implements DatabaseInterface
   public function getTags($filters = array())
   {
     $countField = 'count_public';
-    $sortBy = '`id`';
+    $sortBy = 'id';
     $params = array(':owner' => $this->owner);
     if(isset($filters['sortBy']))
     {
       $sortParts = (array)explode(',', $filters['sortBy']);
       $sortParts[0] = $this->_($sortParts[0]);
-      $sortBy = "`{$sortParts[0]}` ";
+      $sortBy = "{$sortParts[0]} ";
       if(isset($sortParts[1]))
       {
         $sortParts[1] = $this->_($sortParts[1]);
@@ -876,12 +878,12 @@ class DatabaseMySql implements DatabaseInterface
     if(isset($filters['search']) && $filters['search'] != '')
     {
       $filters['search'] = $this->_($filters['search']);
-      $query = "SELECT * FROM `{$this->mySqlTablePrefix}tag` WHERE `owner`=:owner AND `id` IS NOT NULL AND `{$countField}` IS NOT NULL AND `{$countField}` > '0' AND `id` LIKE :search ORDER BY {$sortBy}";
+      $query = "SELECT * FROM {$this->postgreSqlTablePrefix}tag WHERE owner=:owner AND id IS NOT NULL AND {$countField} IS NOT NULL AND {$countField} > '0' AND id LIKE :search ORDER BY {$sortBy}";
       $params[':search'] = "{$filters['search']}%";
     }
     else
     {
-      $query = "SELECT * FROM `{$this->mySqlTablePrefix}tag` WHERE `owner`=:owner AND `id` IS NOT NULL AND `{$countField}` IS NOT NULL AND `{$countField}` > '0' ORDER BY {$sortBy}";
+      $query = "SELECT * FROM {$this->postgreSqlTablePrefix}tag WHERE owner=:owner AND id IS NOT NULL AND {$countField} IS NOT NULL AND {$countField} > '0' ORDER BY {$sortBy}";
     }
     $tags = $this->db->all($query, $params);
 
@@ -919,7 +921,7 @@ class DatabaseMySql implements DatabaseInterface
     if($lock)
       $doLock = 'FOR UPDATE';
 
-    $res = $this->db->one($sql = "SELECT * FROM `{$this->mySqlTablePrefix}user` WHERE `id`=:owner {$doLock}", array(':owner' => $owner));
+    $res = $this->db->one($sql = "SELECT * FROM {$this->postgreSqlTablePrefix}user WHERE id=:owner {$doLock}", array(':owner' => $owner));
 
     if($res)
       return $this->cacheSet('user', $this->normalizeUser($res), $owner);
@@ -937,7 +939,7 @@ class DatabaseMySql implements DatabaseInterface
     if($email == '' || $password == '')
       return false;;
 
-    $res = $this->db->one($sql = "SELECT * FROM `{$this->mySqlTablePrefix}user` WHERE `id`=:email", array(':email' => $email));
+    $res = $this->db->one($sql = "SELECT * FROM {$this->postgreSqlTablePrefix}user WHERE id=:email", array(':email' => $email));
     if($res) {
       if (password_verify($password, $res['password'])) {
         return $this->normalizeUser($res);
@@ -962,7 +964,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function getWebhook($id)
   {
-    $webhook = $this->db->one("SELECT * FROM `{$this->mySqlTablePrefix}webhook` WHERE `id`=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
+    $webhook = $this->db->one("SELECT * FROM {$this->postgreSqlTablePrefix}webhook WHERE id=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
     if(empty($webhook))
       return false;
     return $this->normalizeWebhook($webhook);
@@ -976,9 +978,9 @@ class DatabaseMySql implements DatabaseInterface
   public function getWebhooks($topic = null)
   {
     if($topic)
-      $res = $this->db->all("SELECT * FROM `{$this->mySqlTablePrefix}webhook` WHERE owner=:owner AND `topic`='{$topic}'", array(':owner' => $this->owner));
+      $res = $this->db->all("SELECT * FROM {$this->postgreSqlTablePrefix}webhook WHERE owner=:owner AND topic='{$topic}'", array(':owner' => $this->owner));
     else
-      $res = $this->db->all("SELECT * FROM `{$this->mySqlTablePrefix}webhook` WHERE owner=:owner", array(':owner' => $this->owner));
+      $res = $this->db->all("SELECT * FROM {$this->postgreSqlTablePrefix}webhook WHERE owner=:owner", array(':owner' => $this->owner));
 
     if($res === false)
       return false;
@@ -1000,7 +1002,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function identity()
   {
-    return array('mysql');
+    return array('postgresql');
   }
 
   /**
@@ -1038,14 +1040,14 @@ class DatabaseMySql implements DatabaseInterface
       if($user === null)
         return true;
 
-      getLogger()->crit(sprintf('Could not initialize user for MySql due to email conflict (%s).', $this->owner));
+      getLogger()->crit(sprintf('Could not initialize user for PostgreSql due to email conflict (%s).', $this->owner));
       return false;
     }
     elseif($version === '0.0.0')
     {
       try
       {
-        return $this->executeScript(sprintf('%s/upgrade/db/mysql/mysql-base.php', getConfig()->get('paths')->configs), 'mysql');
+        return $this->executeScript(sprintf('%s/upgrade/db/postgresql/postgresql-base.php', getConfig()->get('paths')->configs), 'postgresql');
       }
       catch(EpiDatabaseException $e)
       {
@@ -1074,12 +1076,14 @@ class DatabaseMySql implements DatabaseInterface
     $bindings[':id'] = $id;
     $bindings[':owner'] = $this->owner;
 
-    $result = $this->db->execute("UPDATE `{$this->mySqlTablePrefix}album` SET {$stmt} WHERE `id`=:id AND owner=:owner", $bindings);
+    $result = $this->db->execute("UPDATE {$this->postgreSqlTablePrefix}album SET {$stmt} WHERE id=:id AND owner=:owner", $bindings);
     return ($result !== false);
   }
 
   /**
     * Add an element to an album
+		* 
+		* TODO: currently emulates UPSERT using element_album_ignore_duplicate_rule, change for PG9.5+
     *
     * @param string $albumId ID of the album to update.
     * @param string $type Type of element
@@ -1089,10 +1093,11 @@ class DatabaseMySql implements DatabaseInterface
   public function postAlbumAdd($albumId, $type, $element_ids)
   {
     $res = true;
+
     foreach($element_ids as $element_id)
     {
-      $tmpRes = $this->db->execute("REPLACE INTO `{$this->mySqlTablePrefix}elementAlbum`(`owner`,`type`,`element`,`album`) VALUES(:owner,:type,:element_id,:albumId)",
-        array(':owner' => $this->owner, ':type' => $type, ':element_id' => $element_id, ':albumId' => $albumId));
+      $tmpRes = $this->db->execute("INSERT INTO {$this->postgreSqlTablePrefix}elementAlbum(owner,type,element,album) VALUES(:owner,:type,:element_id,:albumId)",
+        array(':albumId' => $albumId, ':owner' => $this->owner, ':type' => $type, ':element_id' => $element_id, ':albumId' => $albumId));
       $res = $res && $tmpRes !== 0;
     }
     return $res !== false;
@@ -1111,7 +1116,7 @@ class DatabaseMySql implements DatabaseInterface
     $res = true;
     foreach($element_ids as $element_id)
     {
-      $tmpRes = $res && $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}elementAlbum` WHERE `owner`=:owner AND `element`=:element_id AND `album`=:albumId AND `type`=:type",
+      $tmpRes = $res && $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}elementAlbum WHERE owner=:owner AND element=:element_id AND album=:albumId AND type=:type",
         array(':owner' => $this->owner, ':element_id' => $element_id, ':albumId' => $albumId, ':type' => $type));
       $res = $res && $tmpRes !== false;
     }
@@ -1135,7 +1140,7 @@ class DatabaseMySql implements DatabaseInterface
     {
       if(strlen($album) > 0)
       {
-        $status = $status && $this->db->execute("UPDATE `{$this->mySqlTablePrefix}album` SET `count_public`=`count_public`+:value WHERE owner=:owner AND id=:album",
+        $status = $status && $this->db->execute("UPDATE {$this->postgreSqlTablePrefix}album SET count_public=count_public+:value WHERE owner=:owner AND id=:album",
           array(':value' => $value, ':owner' => $this->owner, ':album' => $album));
       }
     }
@@ -1160,7 +1165,7 @@ class DatabaseMySql implements DatabaseInterface
     $bindings[':id'] = $id;
     $bindings[':owner'] = $this->owner;
 
-    $result = $this->db->execute("UPDATE `{$this->mySqlTablePrefix}credential` SET {$stmt} WHERE `id`=:id AND owner=:owner", $bindings);
+    $result = $this->db->execute("UPDATE {$this->postgreSqlTablePrefix}credential SET {$stmt} WHERE id=:id AND owner=:owner", $bindings);
 
     return ($result !== false);
   }
@@ -1191,7 +1196,7 @@ class DatabaseMySql implements DatabaseInterface
     $bindings[':id'] = $id;
     $bindings[':owner'] = $this->owner;
 
-    $result = $this->db->execute("UPDATE `{$this->mySqlTablePrefix}group` SET {$stmt} WHERE `id`=:id AND owner=:owner", $bindings);
+    $result = $this->db->execute("UPDATE {$this->postgreSqlTablePrefix}group SET {$stmt} WHERE id=:id AND owner=:owner", $bindings);
     if($members !== false)
     {
       $this->deleteGroupMembers($id);
@@ -1234,7 +1239,7 @@ class DatabaseMySql implements DatabaseInterface
       unset($paramsUpd['id']);
       $bindings = $paramsUpd['::bindings'];
       $stmt = $this->sqlUpdateExplode($paramsUpd, $bindings);
-      $res = $this->db->execute("UPDATE `{$this->mySqlTablePrefix}photo` SET {$stmt} WHERE `id`=:id AND owner=:owner", 
+      $res = $this->db->execute("UPDATE {$this->postgreSqlTablePrefix}photo SET {$stmt} WHERE id=:id AND owner=:owner", 
         array_merge($bindings, array(':id' => $id, ':owner' => $this->owner)));
 
       if($res === false)
@@ -1257,8 +1262,10 @@ class DatabaseMySql implements DatabaseInterface
 
   /**
     * Update a single tag.
-    * The $params should include the tag in the `id` field.
+    * The $params should include the tag in the id field.
     * [{id: tag1, count:10, longitude:12.34, latitude:56.78},...]
+    * 
+    * TODO: change to UPSERT when 9.5 is released
     *
     * @param array $params Tags and related attributes to update.
     * @return boolean
@@ -1277,13 +1284,13 @@ class DatabaseMySql implements DatabaseInterface
     $stmtIns = $this->sqlInsertExplode($params, $bindings);
     $stmtUpd = $this->sqlUpdateExplode($params, $bindings);
 
-    $result = $this->db->execute("INSERT INTO `{$this->mySqlTablePrefix}tag` ({$stmtIns['cols']}) VALUES ({$stmtIns['vals']}) ON DUPLICATE KEY UPDATE {$stmtUpd}", $bindings);
+    $result = $this->db->execute("INSERT INTO {$this->postgreSqlTablePrefix}tag ({$stmtIns['cols']}) VALUES ({$stmtIns['vals']})", $bindings);
     return ($result !== false);
   }
 
   /**
     * Update multiple tags.
-    * The $params should include the tag in the `id` field.
+    * The $params should include the tag in the id field.
     * [{id: tag1, count:10, longitude:12.34, latitude:56.78},...]
     *
     * @param array $params Tags and related attributes to update.
@@ -1317,7 +1324,7 @@ class DatabaseMySql implements DatabaseInterface
     {
       if(strlen($tag) > 0)
       {
-        $status = $status && $this->db->execute("UPDATE `{$this->mySqlTablePrefix}tag` SET `count_public`=`count_public`+:value WHERE owner=:owner AND id=:tag",
+        $status = $status && $this->db->execute("UPDATE {$this->postgreSqlTablePrefix}tag SET count_public=count_public+:value WHERE owner=:owner AND id=:tag",
           array(':value' => $value, ':owner' => $this->owner, ':tag' => $tag));
       }
     }
@@ -1344,19 +1351,19 @@ class DatabaseMySql implements DatabaseInterface
 
     $params = $this->prepareUser($params);
     $dbParams = array(':id' => $id);
-    $sql = "UPDATE `{$this->mySqlTablePrefix}user` SET ";
+    $sql = "UPDATE {$this->postgreSqlTablePrefix}user SET ";
     
     if(isset($params['password']) && !empty($params['password']))
     {
-      $sql .= '`password`=:password,';
+      $sql .= 'password=:password,';
       $dbParams[':password'] = $params['password'];
     }
     if(isset($params['extra']) && !empty($params['extra']))
     {
-      $sql .= '`extra`=:extra,';
+      $sql .= 'extra=:extra,';
       $dbParams[':extra'] = $params['extra'];
     }
-    $sql = sprintf('%s WHERE `id`=:id', substr($sql, 0, -1));
+    $sql = sprintf('%s WHERE id=:id', substr($sql, 0, -1));
 
     $res = $this->db->execute($sql, $dbParams); 
     if($res == 1)
@@ -1378,7 +1385,7 @@ class DatabaseMySql implements DatabaseInterface
   public function postWebhook($id, $params)
   {
     $stmt = $this->sqlUpdateExplode($params);
-    $res = $this->db->execute("UPDATE `{$this->mySqlTablePrefix}webhook` SET {$stmt} WHERE `id`=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
+    $res = $this->db->execute("UPDATE {$this->postgreSqlTablePrefix}webhook SET {$stmt} WHERE id=:id AND owner=:owner", array(':id' => $id, ':owner' => $this->owner));
     return ($res == 1);
   }
 
@@ -1392,8 +1399,9 @@ class DatabaseMySql implements DatabaseInterface
     */
   public function putActivity($id, $element_id, $params)
   {
-    $stmt = $this->sqlInsertExplode($this->prepareActivity($params));
-    $result = $this->db->execute("REPLACE INTO `{$this->mySqlTablePrefix}activity` (id,element_id,{$stmt['cols']}) VALUES (:id,:element_id,{$stmt['vals']})", array(':id' => $id, ':element_id' => $element_id));
+		$stmt = $this->sqlInsertExplode($this->prepareActivity($params));
+    $result = $this->db->execute("INSERT INTO {$this->postgreSqlTablePrefix}activity (id,element_id,{$stmt['cols']}) VALUES (:id,:element_id,{$stmt['vals']})", array(':id' => $id, ':element_id' => $element_id));
+
     return ($result !== false);
   }
 
@@ -1408,7 +1416,7 @@ class DatabaseMySql implements DatabaseInterface
   public function putAction($id, $params)
   {
     $stmt = $this->sqlInsertExplode($params);
-    $result = $this->db->execute("INSERT INTO `{$this->mySqlTablePrefix}action` (id,{$stmt['cols']}) VALUES (:id,{$stmt['vals']})", array(':id' => $id));
+    $result = $this->db->execute("INSERT INTO {$this->postgreSqlTablePrefix}action (id,{$stmt['cols']}) VALUES (:id,{$stmt['vals']})", array(':id' => $id));
     return ($result !== false);
   }
 
@@ -1423,7 +1431,7 @@ class DatabaseMySql implements DatabaseInterface
   public function putAlbum($id, $params)
   {
     $stmt = $this->sqlInsertExplode($params);
-    $result = $this->db->execute($sql = "INSERT INTO `{$this->mySqlTablePrefix}album` (id,{$stmt['cols']}) VALUES (:id,{$stmt['vals']})", array(':id' => $id));
+    $result = $this->db->execute($sql = "INSERT INTO {$this->postgreSqlTablePrefix}album (id,{$stmt['cols']}) VALUES (:id,{$stmt['vals']})", array(':id' => $id));
     return ($result !== false);
   }
 
@@ -1441,7 +1449,7 @@ class DatabaseMySql implements DatabaseInterface
       $params['id'] = $id;
     $params = $this->prepareCredential($params);
     $stmt = $this->sqlInsertExplode($params);
-    $result = $this->db->execute("INSERT INTO `{$this->mySqlTablePrefix}credential` ({$stmt['cols']}) VALUES ({$stmt['vals']})");
+    $result = $this->db->execute("INSERT INTO {$this->postgreSqlTablePrefix}credential ({$stmt['cols']}) VALUES ({$stmt['vals']})");
 
     return ($result !== false);
   }
@@ -1462,7 +1470,7 @@ class DatabaseMySql implements DatabaseInterface
     }
     $params = $this->prepareGroup($id, $params);
     $stmt = $this->sqlInsertExplode($params);
-    $result = $this->db->execute("INSERT INTO `{$this->mySqlTablePrefix}group` ({$stmt['cols']}) VALUES ({$stmt['vals']})");
+    $result = $this->db->execute("INSERT INTO {$this->postgreSqlTablePrefix}group ({$stmt['cols']}) VALUES ({$stmt['vals']})");
     if($members !== false)
       $this->addGroupMembers($id, $members);
     return $result !== false;
@@ -1471,6 +1479,8 @@ class DatabaseMySql implements DatabaseInterface
   /**
     * Add a new photo to the database
     * This method does not overwrite existing values present in $params - hence "new photo".
+		*
+		* TODO: currently emulates UPSERT using element_tag_ignore_duplicate_rule, replace for PG9.5+
     *
     * @param string $id ID of the photo to update which is always 1.
     * @param array $params Attributes to update.
@@ -1482,7 +1492,7 @@ class DatabaseMySql implements DatabaseInterface
     $paramsIns = $this->preparePhoto($id, $params);
     $bindings = $paramsIns['::bindings'];
     $stmt = $this->sqlInsertExplode($paramsIns, $bindings);
-    $result = $this->db->execute("INSERT INTO `{$this->mySqlTablePrefix}photo` ({$stmt['cols']}) VALUES ({$stmt['vals']})", $bindings);
+    $result = $this->db->execute("INSERT INTO {$this->postgreSqlTablePrefix}photo ({$stmt['cols']}) VALUES ({$stmt['vals']})", $bindings);
 
     if(isset($params['tags']))
       $this->addTagsToElement($id, $params['tags'], 'photo');
@@ -1503,7 +1513,7 @@ class DatabaseMySql implements DatabaseInterface
       $params['id'] = $id;
     $params = $this->prepareResourceMap($params);
     $stmt = $this->sqlInsertExplode($params);
-    $result = $this->db->execute("INSERT INTO `{$this->mySqlTablePrefix}resourceMap` ({$stmt['cols']}) VALUES ({$stmt['vals']})");
+    $result = $this->db->execute("INSERT INTO {$this->postgreSqlTablePrefix}resourceMap ({$stmt['cols']}) VALUES ({$stmt['vals']})");
     return  ($result !== false);
   }
 
@@ -1520,7 +1530,7 @@ class DatabaseMySql implements DatabaseInterface
     if(isset($params['date_expires']))
       $date_expires = $params['date_expires'];
 
-    $result = $this->db->execute("INSERT INTO `{$this->mySqlTablePrefix}shareToken` (`id`, `owner`, `actor`, `type`, `data`, `date_expires`) 
+    $result = $this->db->execute("INSERT INTO {$this->postgreSqlTablePrefix}shareToken (id, owner, actor, type, data, date_expires) 
       VALUES(:id, :owner, :actor, :type, :data, :date_expires)",
       array(':id' => $id, ':owner' => $this->owner, ':actor' => $this->getActor(), ':type' => $params['type'], ':data' => $params['data'], ':date_expires' => $date_expires));
     return  ($result !== false);
@@ -1553,12 +1563,12 @@ class DatabaseMySql implements DatabaseInterface
     $params = $this->prepareUser($params);
     if(isset($params['password']))
     {
-      $sql = "INSERT INTO `{$this->mySqlTablePrefix}user` (`id`,`password`,`extra`) VALUES (:id,:password,:extra)";
+      $sql = "INSERT INTO {$this->postgreSqlTablePrefix}user (id,password,extra) VALUES (:id,:password,:extra)";
       $params = array(':id' => $this->owner, ':password' => $params['password'], ':extra' => $params['extra']);
     }
     else
     {
-      $sql = "INSERT INTO `{$this->mySqlTablePrefix}user` (`id`,`extra`) VALUES (:id,:extra)";
+      $sql = "INSERT INTO {$this->postgreSqlTablePrefix}user (id,extra) VALUES (:id,:extra)";
       $params = array(':id' => $this->owner, ':extra' => $params['extra']);
     }
 
@@ -1576,7 +1586,7 @@ class DatabaseMySql implements DatabaseInterface
   public function putWebhook($id, $params)
   {
     $stmt = $this->sqlInsertExplode($params);
-    $result = $this->db->execute("INSERT INTO `{$this->mySqlTablePrefix}webhook` ({$stmt['cols']}) VALUES (:id,:owner,{$stmt['vals']})");
+    $result = $this->db->execute("INSERT INTO {$this->postgreSqlTablePrefix}webhook ({$stmt['cols']}) VALUES (:id,:owner,{$stmt['vals']})");
     return $result !== false;
   }
 
@@ -1589,7 +1599,7 @@ class DatabaseMySql implements DatabaseInterface
   {
     try
     {
-      $result = $this->db->one("SELECT * from `{$this->mySqlTablePrefix}admin` WHERE `key`=:key", array(':key' => 'version'));
+      $result = $this->db->one("SELECT * from {$this->postgreSqlTablePrefix}admin WHERE key=:key", array(':key' => 'version'));
       if($result)
         return $result['value'];
     }
@@ -1603,6 +1613,8 @@ class DatabaseMySql implements DatabaseInterface
 
   /**
     * Insert albums into the mapping table
+		*
+		* TODO: currently emulates UPSERT using element_album_ignore_duplicate_rule, replace for PG9.5+
     *
     * @param string $id Element id (id of the photo or video)
     * @param string $albums Album IDs to be added (can also be an array)
@@ -1619,12 +1631,12 @@ class DatabaseMySql implements DatabaseInterface
       $albums = (array)explode(',', $albums);
 
     $hasAlbum = false;
-    $sql = "REPLACE INTO `{$this->mySqlTablePrefix}elementAlbum`(`owner`, `type`, `element`, `album`) VALUES";
+    $sql = "INSERT INTO {$this->postgreSqlTablePrefix}elementAlbum(owner, type, element, album) VALUES";
     foreach($albums as $album)
     {
       if(strlen($album) > 0)
       {
-        $sql .= sprintf("('%s', '%s', '%s', '%s'),", $this->_($this->owner), $this->_($type), $this->_($id), $this->_($album));
+        $sql .= sprintf("'%s', '%s', '%s', '%s',", $this->_($this->owner), $this->_($type), $this->_($id), $this->_($album));
         $hasAlbum = true;
       }
     }
@@ -1640,6 +1652,8 @@ class DatabaseMySql implements DatabaseInterface
 
   /**
     * Add members to a group
+		*
+		* TODO: currently emulates UPSERT using group_member_ignore_duplicate_rule, replace for PG9.5+
     *
     * @param string $id Group id
     * @param array $members Members to be added
@@ -1650,7 +1664,7 @@ class DatabaseMySql implements DatabaseInterface
     if(empty($id) || empty($members))
       return false;
 
-    $sql = "REPLACE INTO `{$this->mySqlTablePrefix}groupMember`(`owner`, `group`, `email`) VALUES ";
+    $sql = "INSERT INTO {$this->postgreSqlTablePrefix}groupMember(owner, group, email) VALUES ";
     foreach($members as $member)
       $sql .= sprintf("('%s', '%s', '%s'),", $this->_($this->owner), $this->_($id), $this->_($member));
 
@@ -1661,6 +1675,9 @@ class DatabaseMySql implements DatabaseInterface
 
   /**
     * Insert groups into the mapping table
+		*
+		* TODO: currently emulates UPSERT using element_group_ignore_duplicate_rule, replace for PG9.5+
+    *
     *
     * @param string $id Element id (id of the photo or video)
     * @param string $groups Groups to be added
@@ -1673,7 +1690,7 @@ class DatabaseMySql implements DatabaseInterface
       return false;
 
     $hasGroup = false;
-    $sql = "REPLACE INTO `{$this->mySqlTablePrefix}elementGroup`(`owner`, `type`, `element`, `group`) VALUES";
+    $sql = "INSERT INTO {$this->postgreSqlTablePrefix}elementGroup(owner, type, element, group) VALUES";
     foreach($groups as $group)
     {
       if(strlen($group) > 0)
@@ -1709,7 +1726,7 @@ class DatabaseMySql implements DatabaseInterface
       $tags = (array)explode(',', $tags);
 
     $hasTag = false;
-    $sql = "INSERT IGNORE INTO `{$this->mySqlTablePrefix}elementTag`(`owner`, `type`, `element`, `tag`) VALUES";
+    $sql = "INSERT INTO {$this->postgreSqlTablePrefix}elementTag(owner, type, element, tag) VALUES";
     foreach($tags as $tag)
     {
       if(strlen($tag) > 0)
@@ -1728,6 +1745,7 @@ class DatabaseMySql implements DatabaseInterface
     return $res !== false;
   }
 
+/*
   // see #1342 for why we do this here instead of in a trigger
   private function adjustItemCounts($items, $type)
   {
@@ -1755,18 +1773,18 @@ class DatabaseMySql implements DatabaseInterface
     $itemsForSql = sprintf("'%s'", implode("','", $itemsForSql));
     // get public and private counts for all the items
     // private item counts (omit permission column in WHERE clause to get all photos (private is everything))
-    $privateCounts = $this->db->all($sql = "SELECT ei.`{$column}`, COUNT(*) AS _CNT
-      FROM `{$this->mySqlTablePrefix}photo` AS p INNER JOIN `{$this->mySqlTablePrefix}{$tableMap}` AS ei ON ei.`element`=p.`id`
-      WHERE ei.`owner`=:owner1 AND ei.`{$column}` IN ({$itemsForSql}) AND p.`owner`=:owner2 AND p.`active`=1
-      GROUP BY ei.`{$table}`", 
+    $privateCounts = $this->db->all($sql = "SELECT ei.{$column}, COUNT(*) AS _cnt
+      FROM {$this->postgreSqlTablePrefix}photo AS p INNER JOIN {$this->postgreSqlTablePrefix}{$tableMap} AS ei ON ei.element=p.id
+      WHERE ei.owner=:owner1 AND ei.{$column} IN ({$itemsForSql}) AND p.owner=:owner2 AND p.active=1
+      GROUP BY ei.{$table}", 
       array(':owner1' => $this->owner, ':owner2' => $this->owner)
     );
 
     // public item counts (include permission column in WHERE clause to get only public photos)
-    $publicCounts = $this->db->all("SELECT ei.`{$column}`, COUNT(*) AS _CNT
-      FROM `{$this->mySqlTablePrefix}photo` AS p INNER JOIN `{$this->mySqlTablePrefix}{$tableMap}` AS ei ON ei.`element`=p.`id`
-      WHERE ei.`owner`=:owner1 AND ei.`{$column}` IN ({$itemsForSql}) AND p.`owner`=:owner2 AND p.`permission`=:permission AND p.`active`=1
-      GROUP BY ei.`{$column}`", 
+    $publicCounts = $this->db->all("SELECT ei.{$column}, COUNT(*) AS _cnt
+      FROM {$this->postgreSqlTablePrefix}photo AS p INNER JOIN {$this->postgreSqlTablePrefix}{$tableMap} AS ei ON ei.element=p.id
+      WHERE ei.owner=:owner1 AND ei.{$column} IN ({$itemsForSql}) AND p.owner=:owner2 AND p.permission=:permission AND p.active=1
+      GROUP BY ei.{$column}", 
       array(':owner1' => $this->owner, ':owner2' => $this->owner, ':permission' => '1')
     );
 
@@ -1783,35 +1801,36 @@ class DatabaseMySql implements DatabaseInterface
     if(!empty($privateDiff))
     {
       foreach($privateDiff as $pItem)
-        $privateCounts[] = array($column => $pItem, '_CNT' => 0);
+        $privateCounts[] = array($column => $pItem, '_cnt' => 0);
     }
 
     if(!empty($publicDiff))
     {
       foreach($publicDiff as $pItem)
-        $publicCounts[] = array($column => $pItem, '_CNT' => 0);
+        $publicCounts[] = array($column => $pItem, '_cnt' => 0);
     }
 
-    $itemCountSql = "UPDATE `{$this->mySqlTablePrefix}{$table}` ";
+    $itemCountSql = "UPDATE {$this->postgreSqlTablePrefix}{$table} ";
     if(count($privateCounts) > 0)
     {
-      $itemCountSql .= 'SET `count_private` = CASE `id` ';
+      $itemCountSql .= 'SET count_private = CASE id ';
       foreach($privateCounts as $t)
-        $itemCountSql .= sprintf("WHEN '%s' THEN '%s' ", $this->_($t[$column]), $t['_CNT']);
-      $itemCountSql .= "ELSE `id` END WHERE `owner`=:owner AND `id` IN({$itemsForSql})";
+        $itemCountSql .= sprintf("WHEN '%s' THEN '%s' ", $this->_($t[$column]), $t['_cnt']);
+      $itemCountSql .= "ELSE id END WHERE owner=:owner AND id IN({$itemsForSql})";
       $this->db->execute($itemCountSql, array(':owner' => $this->owner));
     }
     
-    $itemCountSql = "UPDATE `{$this->mySqlTablePrefix}{$table}` ";
+    $itemCountSql = "UPDATE {$this->postgreSqlTablePrefix}{$table} ";
     if(count($publicCounts) > 0)
     {
-      $itemCountSql .= 'SET `count_public` = CASE `id` ';
+      $itemCountSql .= 'SET count_public = CASE id ';
       foreach($publicCounts as $t)
-        $itemCountSql .= sprintf("WHEN '%s' THEN '%s' ", $this->_($t[$column]), $t['_CNT']);
-      $itemCountSql .= "ELSE `id` END WHERE `owner`=:owner AND `id` IN({$itemsForSql})";
+        $itemCountSql .= sprintf("WHEN '%s' THEN '%s' ", $this->_($t[$column]), $t['_cnt']);
+      $itemCountSql .= "ELSE id END WHERE owner=:owner AND id IN({$itemsForSql})";
       $this->db->execute($itemCountSql, array(':owner' => $this->owner));
     }
   }
+*/
 
   /**
     * Build parts of the photos select query
@@ -1824,8 +1843,8 @@ class DatabaseMySql implements DatabaseInterface
   private function buildQuery($filters, $limit, $offset, $table)
   {
     // TODO: support logic for multiple conditions
-    $from = "FROM `{$this->mySqlTablePrefix}{$table}` ";
-    $where = "WHERE `{$this->mySqlTablePrefix}{$table}`.`owner`='{$this->owner}'";
+    $from = "FROM {$this->postgreSqlTablePrefix}{$table} ";
+    $where = "WHERE {$this->postgreSqlTablePrefix}{$table}.owner='{$this->owner}'";
     if($table === 'activity')
     {
       // for owners and admins we get social feed
@@ -1833,16 +1852,16 @@ class DatabaseMySql implements DatabaseInterface
       $ids = array($this->owner);
       if($this->isAdmin())
       {
-        $queryForFollows = $this->db->all("SELECT `follows` FROM `{$this->mySqlTablePrefix}relationship` WHERE `actor`=:actor", array(':actor' => $this->getActor()));
+        $queryForFollows = $this->db->all("SELECT follows FROM {$this->postgreSqlTablePrefix}relationship WHERE actor=:actor", array(':actor' => $this->getActor()));
         foreach($queryForFollows as $followRes)
           $ids[] = $this->_($followRes['follows']);
       }
       $ids = sprintf("'%s'", implode("','", $ids));
-      $where = "WHERE `{$this->mySqlTablePrefix}{$table}`.`owner` IN({$ids})";
+      $where = "WHERE {$this->postgreSqlTablePrefix}{$table}.owner IN({$ids})";
     }
     elseif($table === 'photo')
     {
-      $where = $this->buildWhere($where, '`active`=1');
+      $where = $this->buildWhere($where, 'active=1');
     }
     $groupBy = '';
 
@@ -1857,7 +1876,7 @@ class DatabaseMySql implements DatabaseInterface
       switch($name)
       {
         case 'album':
-          $subquery = sprintf("`id` IN (SELECT element FROM `{$this->mySqlTablePrefix}elementAlbum` WHERE `{$this->mySqlTablePrefix}elementAlbum`.`owner`='%s' AND `type`='%s' AND `album`='%s')",
+          $subquery = sprintf("id IN (SELECT element FROM {$this->postgreSqlTablePrefix}elementAlbum WHERE {$this->postgreSqlTablePrefix}elementAlbum.owner='%s' AND type='%s' AND album='%s')",
             $this->_($this->owner), 'photo', $value);
           $where = $this->buildWhere($where, $subquery);
           break;
@@ -1869,39 +1888,39 @@ class DatabaseMySql implements DatabaseInterface
           $ids = (array)explode(',', $value);
           foreach($ids as $k => $v)
             $ids[$k] = $this->_($v);
-          $where = $this->buildWhere($where, sprintf("`id` IN ('%s')", implode("','", $ids)));
+          $where = $this->buildWhere($where, sprintf("id IN ('%s')", implode("','", $ids)));
           break;
         case 'groups':
           if(!is_array($value))
             $value = (array)explode(',', $value);
           foreach($value as $k => $v)
             $value[$k] = $this->_($v);
-          $subquery = sprintf("(`id` IN (SELECT element FROM `{$this->mySqlTablePrefix}elementGroup` WHERE `{$this->mySqlTablePrefix}elementGroup`.`owner`='%s' AND `type`='%s' AND `group` IN('%s')) OR permission='1')",
+          $subquery = sprintf("(id IN (SELECT element FROM {$this->postgreSqlTablePrefix}elementGroup WHERE {$this->postgreSqlTablePrefix}elementGroup.owner='%s' AND type='%s' AND group IN('%s')) OR permission='1')",
             $this->_($this->owner), 'photo', implode("','", $value));
           $where = $this->buildWhere($where, $subquery);
           break;
         case 'keywords':
-          $where = $this->buildWhere($where, sprintf("(`title` LIKE '%%%s%%' OR `description` LIKE '%%%s%%' OR `filename_original` LIKE '%%%s%%')", $this->_($value), $this->_($value), $this->_($value)));
+          $where = $this->buildWhere($where, sprintf("(title LIKE '%%%s%%' OR description LIKE '%%%s%%' OR filename_original LIKE '%%%s%%')", $this->_($value), $this->_($value), $this->_($value)));
           break;
         case 'page':
           if($value > 1)
             $offset = intval(($limit * $value) - $limit);
           break;
         case 'permission':
-          $where = $this->buildWhere($where, "`permission`='1'");
+          $where = $this->buildWhere($where, "permission='1'");
           break;
         case 'since': // deprecate this, only implemented for testing. delete after grepping source @jmathai #592 #973
         case 'takenAfter':
-          $where = $this->buildWhere($where, sprintf("`date_sort_by_day`>'%s'", $this->_($this->date_sort_by_day(strtotime($value)))));
+          $where = $this->buildWhere($where, sprintf("date_sort_by_day>'%s'", $this->_($this->date_sort_by_day(strtotime($value)))));
           break;
         case 'takenBefore':
-          $where = $this->buildWhere($where, sprintf("`date_sort_by_day`<'%s'", $this->_($this->date_sort_by_day(strtotime($value)))));
+          $where = $this->buildWhere($where, sprintf("date_sort_by_day<'%s'", $this->_($this->date_sort_by_day(strtotime($value)))));
           break;
         case 'uploadedAfter':
-          $where = $this->buildWhere($where, sprintf("`date_uploaded`>'%s'", $this->_(strtotime($value))));
+          $where = $this->buildWhere($where, sprintf("date_uploaded>'%s'", $this->_(strtotime($value))));
           break;
         case 'uploadedBefore':
-          $where = $this->buildWhere($where, sprintf("`date_uploaded`<'%s'", $this->_(strtotime($value))));
+          $where = $this->buildWhere($where, sprintf("date_uploaded<'%s'", $this->_(strtotime($value))));
           break;
         case 'sortBy':
           // default is date_taken,desc
@@ -1911,13 +1930,13 @@ class DatabaseMySql implements DatabaseInterface
               $sortBy = 'ORDER BY date_taken DESC';
               break;
             case 'date_taken,asc':
-              $sortBy = 'ORDER BY `date_taken` ASC';
+              $sortBy = 'ORDER BY date_taken ASC';
               break;
             case 'date_uploaded,desc':
-              $sortBy = 'ORDER BY `date_uploaded` DESC';
+              $sortBy = 'ORDER BY date_uploaded DESC';
               break;
             case 'date_uploaded,asc':
-              $sortBy = 'ORDER BY `date_uploaded` ASC';
+              $sortBy = 'ORDER BY date_uploaded ASC';
               break;
             default:
               if($table === 'photo')
@@ -1942,7 +1961,7 @@ class DatabaseMySql implements DatabaseInterface
           foreach($value as $k => $v)
           {
             $v = $value[$k] = $this->_($v);
-            $thisRes = $this->db->all(sprintf("SELECT `element`, `tag` FROM `%selementTag` WHERE `owner`='%s' AND `type`='photo' AND `tag`='%s'", $this->mySqlTablePrefix, $this->owner, $v));
+            $thisRes = $this->db->all(sprintf("SELECT element, tag FROM %selementTag WHERE owner='%s' AND type='photo' AND tag='%s'", $this->postgreSqlTablePrefix, $this->owner, $v));
             foreach($thisRes as $t)
             {
               if(isset($ids[$t['element']]))
@@ -1958,11 +1977,11 @@ class DatabaseMySql implements DatabaseInterface
               unset($ids[$k]);
           }
 
-          $where = $this->buildWhere($where, sprintf("`%sphoto`.`id` IN('%s')", $this->mySqlTablePrefix, implode("','", array_keys($ids))));
+          $where = $this->buildWhere($where, sprintf("%sphoto.id IN('%s')", $this->postgreSqlTablePrefix, implode("','", array_keys($ids))));
           break;
         case 'type': // type for activity
           $value = $this->_($value);
-          $where = $this->buildWhere($where, "`type`='{$value}'");
+          $where = $this->buildWhere($where, "type='{$value}'");
           break;
       }
     }
@@ -2052,7 +2071,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   private function deleteAlbumsFromElement($id)
   {
-    $res = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}elementAlbum` WHERE `owner`=:owner AND `type`=:type AND `element`=:album", array(':owner' => $this->owner, ':type' => 'photo', ':album' => $id));
+    $res = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}elementAlbum WHERE owner=:owner AND type=:type AND element=:album", array(':owner' => $this->owner, ':type' => 'photo', ':album' => $id));
     return $res !== false;
   }
 
@@ -2066,7 +2085,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   private function deleteGroupsFromElement($id, $type)
   {
-    $res = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}elementGroup` WHERE `owner`=:owner AND `type`=:type AND `element`=:element", array(':owner' => $this->owner, ':type' => $type, ':element' => $id));
+    $res = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}elementGroup WHERE owner=:owner AND type=:type AND element=:element", array(':owner' => $this->owner, ':type' => $type, ':element' => $id));
     return $res !== false;
   }
 
@@ -2078,7 +2097,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   private function deleteGroupMembers($id)
   {
-    $res = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}groupMember` WHERE `owner`=:owner AND `group`=:group", array(':owner' => $this->owner, ':group' => $id));
+    $res = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}groupMember WHERE owner=:owner AND group=:group", array(':owner' => $this->owner, ':group' => $id));
     return $res !== false;
   }
 
@@ -2092,7 +2111,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   private function deleteTagsFromElement($id, $type)
   {
-    $res = $this->db->execute("DELETE FROM `{$this->mySqlTablePrefix}elementTag` WHERE `owner`=:owner AND `type`=:type AND `element`=:element", array(':owner' => $this->owner, ':type' => $type, ':element' => $id));
+    $res = $this->db->execute("DELETE FROM {$this->postgreSqlTablePrefix}elementTag WHERE owner=:owner AND type=:type AND element=:element", array(':owner' => $this->owner, ':type' => $type, ':element' => $id));
     return $res !== false;
   }
 
@@ -2125,7 +2144,7 @@ class DatabaseMySql implements DatabaseInterface
     */
   private function getPhotoVersions($id)
   {
-    $versions = $this->db->all("SELECT `key`,path FROM `{$this->mySqlTablePrefix}photoVersion` WHERE `owner`=:owner AND `id`=:id ",
+    $versions = $this->db->all("SELECT key,path FROM {$this->postgreSqlTablePrefix}photoVersion WHERE owner=:owner AND id=:id ",
                  array(':id' => $id, ':owner' => $this->owner));
     if(empty($versions))
       return false;
@@ -2133,7 +2152,7 @@ class DatabaseMySql implements DatabaseInterface
   }
 
   /**
-    * Normalizes data from MySql into schema definition
+    * Normalizes data from PostgreSql into schema definition
     *
     * @param Array $raw An action from SimpleDb in SimpleXML.
     * @return array
@@ -2145,7 +2164,7 @@ class DatabaseMySql implements DatabaseInterface
   }
 
   /**
-    * Normalizes data from MySql into schema definition
+    * Normalizes data from PostgreSql into schema definition
     *
     * @param Array $raw An action from SimpleDb in SimpleXML.
     * @return array
@@ -2156,7 +2175,7 @@ class DatabaseMySql implements DatabaseInterface
   }
 
   /**
-    * Normalizes data from MySql into schema definition
+    * Normalizes data from PostgreSql into schema definition
     *
     * @param Array $raw An action from SimpleDb in SimpleXML.
     * @return array
@@ -2181,7 +2200,7 @@ class DatabaseMySql implements DatabaseInterface
   }
 
   /**
-    * Normalizes data from MySql into schema definition
+    * Normalizes data from PostgreSql into schema definition
     * TODO this should eventually translate the json field
     *
     * @param Array $raw A photo from SimpleDb in SimpleXML.
@@ -2221,7 +2240,7 @@ class DatabaseMySql implements DatabaseInterface
     return $photo;
   }
   /**
-    * Normalizes data from MySql into schema definition
+    * Normalizes data from PostgreSql into schema definition
     * TODO this should eventually translate the json field
     *
     * @param Array $raw A tag from SimpleDb in SimpleXML.
@@ -2243,7 +2262,7 @@ class DatabaseMySql implements DatabaseInterface
   }
 
   /**
-    * Normalizes data from MySql into schema definition
+    * Normalizes data from PostgreSql into schema definition
     * TODO this should eventually translate the json field
     *
     * @param Array $raw A tag from SimpleDb in SimpleXML.
@@ -2260,7 +2279,7 @@ class DatabaseMySql implements DatabaseInterface
   }
 
   /**
-    * Normalizes data from MySql into schema definition
+    * Normalizes data from PostgreSql into schema definition
     * TODO this should eventually translate the json field
     *
     * @param Array $raw A tag from SimpleDb in SimpleXML.
@@ -2292,7 +2311,7 @@ class DatabaseMySql implements DatabaseInterface
 
 
   /**
-    * Normalizes data from MySql into schema definition
+    * Normalizes data from PostgreSql into schema definition
     *
     * @param Array $raw An action from SimpleDb in SimpleXML.
     * @return array
@@ -2460,7 +2479,8 @@ class DatabaseMySql implements DatabaseInterface
         if($val !== null && ($prefix === 'last' ||  $prefix === 'attr'))
           $extra[$key] = $val;
       }
-      $ret['extra'] = json_encode($extra);
+      if(!empty($extra))
+        $ret['extra'] = json_encode($extra);
       if(isset($params['password']))
         $ret['password'] = $params['password'];
     }
@@ -2483,6 +2503,8 @@ class DatabaseMySql implements DatabaseInterface
   /**
     * Inserts a new version of photo with $id and $versions
     * TODO this should be in a json field in the photo table
+		*
+		* TODO: currently emulates UPSERT using photo_version_ignore_duplicate_rule, replace for PG9.5+
     *
     * @param string $id ID of the photo.
     * @param array $versions Versions to the photo be inserted
@@ -2494,7 +2516,7 @@ class DatabaseMySql implements DatabaseInterface
     {
       // TODO this is gonna fail if we already have the version -- hfiguiere
       // Possibly use REPLACE INTO? -- jmathai
-      $result = $this->db->execute("REPLACE INTO {$this->mySqlTablePrefix}photoVersion (`id`, `owner`, `key`, `path`) VALUES(:id, :owner, :key, :value)",
+      $result = $this->db->execute("INSERT INTO {$this->postgreSqlTablePrefix}photoVersion (id, owner, key, path) VALUES(:id, :owner, :key, :value)",
         array(':id' => $id, ':owner' => $this->owner, ':key' => $key, ':value' => $value));
     }
     // TODO, what type of return value should we have here -- jmathai
@@ -2528,6 +2550,8 @@ class DatabaseMySql implements DatabaseInterface
       {
         if(is_null($value))
           $stmt['vals'] .= 'NULL';
+        elseif (is_int($value))
+          $stmt['vals'] .= sprintf("%s", $this->_($value));
         else
           $stmt['vals'] .= sprintf("'%s'", $this->_($value));
       }
@@ -2541,19 +2565,22 @@ class DatabaseMySql implements DatabaseInterface
     * @param string $id Element id
     * @return boolean
     */
-  protected function setActiveFieldForAlbumsFromElement($id, $value)
+/*  protected function setActiveFieldForAlbumsFromElement($id, $type, $value)
   {
+
+    error_log("setActiveFieldForAlbumsFromElement $id, $value");
     $photo = $this->getPhoto($id);
     $albums = $photo['albums'];
 
-    $res = $this->db->execute("UPDATE `{$this->mySqlTablePrefix}elementAlbum` SET `active`=:active WHERE `owner`=:owner AND `type`=:type AND `element`=:album", array(':active' => $value, ':owner' => $this->owner, ':type' => 'photo', ':album' => $id));
+    $res = $this->db->execute("UPDATE {$this->postgreSqlTablePrefix}elementAlbum SET active=:active WHERE owner=:owner AND type=:type AND element=:album", array(':active' => $value, ':owner' => $this->owner, ':type' => $type, ':album' => $id));
 
     if($res === false)
       return false;
 
-    $this->adjustItemCounts($albums, 'album');
+    //$this->adjustItemCounts($albums, 'album');
     return true;
   }
+*/
 
   /**
     * Set active column for an element from the mapping table
@@ -2563,19 +2590,20 @@ class DatabaseMySql implements DatabaseInterface
     * @param string $type Element type (photo or video)
     * @return boolean
     */
-  protected function setActiveFieldForTagsFromElement($id, $type, $value)
+/*  protected function setActiveFieldForTagsFromElement($id, $type, $value)
   {
     $photo = $this->getPhoto($id);
     $tags = $photo['tags'];
 
-    $res = $this->db->execute("UPDATE `{$this->mySqlTablePrefix}elementTag` SET `active`=:active WHERE `owner`=:owner AND `type`=:type AND `element`=:element", array(':active' => $value, ':owner' => $this->owner, ':type' => $type, ':element' => $id));
+    $res = $this->db->execute("UPDATE {$this->postgreSqlTablePrefix}elementTag SET active=:active WHERE owner=:owner AND type=:type AND element=:element", array(':active' => $value, ':owner' => $this->owner, ':type' => $type, ':element' => $id));
 
     if($res === false)
       return false;
 
-    $this->adjustItemCounts($tags, 'tag');
+    // $this->adjustItemCounts($tags, 'tag');
     return true;
   }
+*/
 
   /**
    * Explode params associative array into SQL update statement lists
@@ -2594,9 +2622,11 @@ class DatabaseMySql implements DatabaseInterface
         $stmt .= ",";
       }
       if(!empty($bindings) && array_key_exists($value, $bindings))
-        $stmt .= "`{$key}`={$value}";
+        $stmt .= "{$key}={$value}";
+      elseif(is_int($value))
+        $stmt .= sprintf("%s=%s", $key, $value);
       else
-        $stmt .= sprintf("`%s`='%s'", $key, $this->_($value));
+        $stmt .= sprintf("%s='%s'", $key, $this->_($value));
     }
     return $stmt;
   }
@@ -2658,6 +2688,7 @@ class DatabaseMySql implements DatabaseInterface
    */
   private function _($str)
   {
-    return addslashes($str);
+    //return addslashes($str);
+    return $str;
   }
 }

@@ -60,14 +60,14 @@ class Credential extends BaseModel
       'owner' => $this->owner,
       'actor' => $this->getActor(),
       'name' => $name,
-      'clientSecret' => substr($randomConsumer, -10),
-      'userToken' => substr($randomUser, 0, 30),
-      'userSecret' => substr($randomUser, -10),
+      'client_secret' => substr($randomConsumer, -10),
+      'user_token' => substr($randomUser, 0, 30),
+      'user_secret' => substr($randomUser, -10),
       'permissions' => $permissions,
       'verifier' => substr($randomConsumer, 30, 10),
       'type' => self::typeUnauthorizedRequest,
       'status' => self::statusActive,
-      'dateCreated' => time()
+      'date_created' => time()
     );
     $res = $this->db->putCredential($id, $params);
     if($res)
@@ -152,7 +152,7 @@ class Credential extends BaseModel
       return OAUTH_CONSUMER_KEY_REFUSED;
     }
 
-    $provider->consumer_secret = $consumer['clientSecret'];
+    $provider->consumer_secret = $consumer['client_secret'];
     return OAUTH_OK;
   }
 
@@ -222,7 +222,7 @@ class Credential extends BaseModel
       return OAUTH_VERIFIER_INVALID;
     }
 
-    $provider->token_secret = $consumer['userSecret'];
+    $provider->token_secret = $consumer['user_secret'];
     return OAUTH_OK;
   }
 

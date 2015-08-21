@@ -63,13 +63,13 @@ class FileSystemLocalDropbox extends FileSystemLocal implements FileSystemInterf
     return parent::getPhoto($filename);
   }
 
-  public function putPhoto($localFile, $remoteFile, $dateTaken)
+  public function putPhoto($localFile, $remoteFile, $date_taken)
   {
     $parentStatus = true;
     if(strpos($remoteFile, '/original/') === false)
-      $parentStatus = parent::putPhoto($localFile, $remoteFile, $dateTaken);
+      $parentStatus = parent::putPhoto($localFile, $remoteFile, $date_taken);
 
-    return $this->dropbox->putPhoto($localFile, $remoteFile, $dateTaken) && $parentStatus;
+    return $this->dropbox->putPhoto($localFile, $remoteFile, $date_taken) && $parentStatus;
   }
 
   public function putPhotos($files)
@@ -79,7 +79,7 @@ class FileSystemLocalDropbox extends FileSystemLocal implements FileSystemInterf
     {
       list($localFile, $remoteFileArr) = each($file);
       $remoteFile = $remoteFileArr[0];
-      $dateTaken = $remoteFileArr[1];
+      $date_taken = $remoteFileArr[1];
       if(strpos($remoteFile, '/original/') === false)
         $parentFiles[] = $file;
     }

@@ -91,11 +91,11 @@ class ApiAlbumController extends ApiBaseController
     if($albums === false)
       return $this->error('Could not retrieve albums', false);
 
-    $albumCountKey = $this->user->isAdmin() ? 'countPrivate' : 'countPublic';
+    $albumCountKey = $this->user->isAdmin() ? 'count_private' : 'count_public';
     foreach($albums as $key => $val)
     {
       $albums[$key]['count'] = $val[$albumCountKey];
-      unset($albums[$key]['countPublic'], $albums[$key]['countPrivate']);
+      unset($albums[$key]['count_public'], $albums[$key]['count_private']);
     }
 
     if(!empty($albums))
@@ -174,9 +174,9 @@ class ApiAlbumController extends ApiBaseController
     if($album === false)
       return $this->error('Could not retrieve album', false);
 
-    $albumCountKey = $this->user->isAdmin() ? 'countPrivate' : 'countPublic';
+    $albumCountKey = $this->user->isAdmin() ? 'count_private' : 'count_public';
     $album['count'] = $album[$albumCountKey];
-    unset($album['countPublic'], $album['countPrivate']);
+    unset($album['count_public'], $album['count_private']);
 
     return $this->success('Album', $album);
   }

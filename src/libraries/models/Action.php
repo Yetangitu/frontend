@@ -21,14 +21,14 @@ class Action extends BaseModel
 
   /**
     * Add an action to a photo/video.
-    * Accepts a set of params that must include a type and targetType
+    * Accepts a set of params that must include a type and target_type
     *
     * @param array $params Params describing the action to be added
     * @return mixed Action ID on success, false on failure
     */
   public function create($params)
   {
-    if(!isset($params['type']) || !isset($params['targetType']))
+    if(!isset($params['type']) || !isset($params['target_type']))
       return false;
 
     $id = $this->user->getNextId('action');
@@ -40,7 +40,7 @@ class Action extends BaseModel
     $params = array_merge($this->getDefaultAttributes(), $params);
     $params['owner'] = $this->owner;
     $params['actor'] = $this->getActor();
-    $params['permalink'] = sprintf('%s#action-%s', $params['targetUrl'], $id);
+    $params['permalink'] = sprintf('%s#action-%s', $params['target_url'], $id);
     $action = $this->db->putAction($id, $params);
     if(!$action)
     {
@@ -82,15 +82,15 @@ class Action extends BaseModel
   private function getDefaultAttributes()
   {
     return array(
-      'appId' => $this->config->application->appId,
+      'app_id' => $this->config->application->app_id,
       'email' => '',
       'name' => '',
       'avatar' => '',
       'website' => '',
-      'targetUrl' => '',
+      'target_url' => '',
       'permalink' => '',
       'value' => '',
-      'datePosted' => time(),
+      'date_posted' => time(),
       'status' => 1
     );
   }

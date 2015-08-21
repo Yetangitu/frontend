@@ -143,11 +143,15 @@ class PhotoController extends BaseController
     if(!empty($_SERVER['QUERY_STRING']))
       parse_str($_SERVER['QUERY_STRING'], $getParams);
 
-    $additionalParams = array('returnSizes' => $returnSizes, 'sortBy' => 'dateUploaded,desc');
+    $additionalParams = array('returnSizes' => $returnSizes, 'sortBy' => 'date_uploaded,desc');
+
+    $isAlbum = strrpos($filterOpts,"album") === 0;
+    $isTags = strrpos($filterOpts,"tags") === 0;
+
     if($isAlbum || $isTags)
     {
       if(!isset($getParams['sortBy']))
-        $additionalParams['sortBy'] = 'dateTaken,asc';
+        $additionalParams['sortBy'] = 'date_taken,asc';
 
       if($isAlbum)
         $additionalParams['pageSize'] = '0';

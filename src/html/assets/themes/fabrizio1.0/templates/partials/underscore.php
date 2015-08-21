@@ -2,28 +2,28 @@
 <script type="tmpl/underscore" id="photo-meta">
   <div class="photo-meta">
     <?php if($isAdmin) { ?>
-      <h4 class="title edit"><a href="/p/<%= id %>" title="Update the title"><i class="icon-pencil"></i><%- title || filenameOriginal %></a></h4>
+      <h4 class="title edit"><a href="/p/<%= id %>" title="Update the title"><i class="icon-pencil"></i><%- title || filename_original %></a></h4>
       <ul class="info">
         <!--<li><a href="#" title="Comments"><i class="icon-comments"></i> <span class="number">24</span></li>
         <li><a href="#" title="Favorites"><i class="icon-heart"></i> <span class="number">24</span></li>-->
-        <li><a href="#" class="share" title="Share via Facebook, Twitter or Email" data-id="<%= id %>"><i class="icon-share-alt"></i>Share</a> &nbsp;</li>
+        <li><a href="#" class="share" title="Share via Email" data-id="<%= id %>"><i class="icon-share-alt"></i>Share</a> &nbsp;</li>
         <li class="pull-right"><a href="#" title="Delete this photo"><i class="icon-trash photo delete edit" data-action="delete" data-ids="<%= id %>"></i></a></li>
         <li class="pull-right"><a href="#" title="Select for batch editing"><i class="icon-pushpin pin edit" data-id="<%= id %>"></i></a></li>
         <li class="pull-right album"><a href="#" title="Set as your album cover"><i class="icon-th-large album edit" data-id="<%= id %>"></i></a></li>
         <li class="pull-right"><a href="#" title="Toggle the privacy setting"><i class="icon-<%= permission == 0 ? 'lock' : 'unlock' %> permission edit" data-id="<%= id %>"></i></a></li>
       </ul>
     <?php } else { ?>
-      <h4 class="title"><%- title || filenameOriginal %></h4>
+      <h4 class="title"><%- title || filename_original %></h4>
       <ul class="info">
         <!--<li><a href="#"><i class="icon-comments"></i> <span class="number">24</span></a></li>
         <li><a href="#"><i class="icon-heart"></i> <span class="number">24</span></a></li>-->
-        <!--<li><a href="#" title="Share via Facebook, Twitter or Email"><i class="icon-share-alt"></i> Share</a></li>-->
+        <!--<li><a href="#" title="Share via Email"><i class="icon-share-alt"></i> Share</a></li>-->
       </ul>
     <?php } ?>
   </div>
 </script>
 <script type="tmpl/underscore" id="photo-meta-date">
-  <i class="tb-icon-small-calendar tb-icon-light""></i><%= phpjs.date('M jS, Y', dateTaken) %>
+  <i class="tb-icon-small-calendar tb-icon-light""></i><%= phpjs.date('M jS, Y', date_taken) %>
 </script>
 <script type="tmpl/underscore" id="profile-photo-meta">
   <% if(photoUrl.search('gravatar.com') == -1) { %>
@@ -129,14 +129,14 @@
     <div class="title">
       <span class="text">
         <?php if($isAdmin) { ?>
-          <a href="#" class="title edit text"><i class="icon-pencil"></i><%- title || filenameOriginal %></a>
+          <a href="#" class="title edit text"><i class="icon-pencil"></i><%- title || filename_original %></a>
         <?php } else { ?>
-          <%- title || filenameOriginal %>
+          <%- title || filename_original %>
         <?php } ?>
       </span>
       <span class="actions hidden-phone">
         <?php if($isAdmin) { ?>
-          <a href="#" class="share" data-id="<%= id %>" title="Share this photo via email, Facebook or Twitter"><i class="icon-share-alt"></i></a>
+          <a href="#" class="share" data-id="<%= id %>" title="Share this photo via email"><i class="icon-share-alt"></i></a>
           <a href="<%= pathDownload %>" title="Download the original high resolution photo"><i class="icon-download"></i></a>
         <?php } else { ?>
           <?php if($this->config->site->allowOriginalDownload == 1) { ?>
@@ -231,9 +231,9 @@
 
 <script type="tmpl/underscore" id="photo-detail-title-tmpl">
   <?php if($isAdmin) { ?>
-    <span class="title edit"><i class="icon-pencil"></i><%- title || filenameOriginal %></span>
+    <span class="title edit"><i class="icon-pencil"></i><%- title || filename_original %></span>
   <?php } else { ?>
-    <span class="title"><%- title || filenameOriginal %></span>
+    <span class="title"><%- title || filename_original %></span>
   <?php } ?>
   <span class="actions">
     <!--<a href="#"><i class="icon-heart"></i></a>
@@ -246,9 +246,9 @@
 
 <script type="tmpl/underscore" id="photo-detail-date-tmpl">
   <?php if($isAdmin) { ?>
-    <i class="icon-calendar"></i> <span class="date-view date edit"><%= phpjs.date('l, F jS, Y @ g:ia', dateTaken) %><span class="display-for-edit" data-value="<%= phpjs.date('F j, Y h:i a', dateTaken) %>"></span></span>
+    <i class="icon-calendar"></i> <span class="date-view date edit"><%= phpjs.date('l, F jS, Y @ g:ia', date_taken) %><span class="display-for-edit" data-value="<%= phpjs.date('F j, Y h:i a', date_taken) %>"></span></span>
   <?php } else { ?>
-    <i class="icon-calendar"></i> <%= phpjs.date('M d, Y', dateTaken) %></i>
+    <i class="icon-calendar"></i> <%= phpjs.date('M d, Y', date_taken) %></i>
   <?php } ?>
 </script>
 
@@ -265,7 +265,7 @@
   <form class="comment-form" action="/action/<%= id %>/photo/create" method="post">
     <textarea rows="4" name="value"></textarea>
     <input type="hidden" name="type" value="comment" />
-    <input type="hidden" name="targetUrl" value="<%= window.location %>" />
+    <input type="hidden" name="target_url" value="<%= window.location %>" />
     <input type="hidden" name="crumb" value="" />
     <div class="form-buttons">
       <button class="btn btn-primary" type="submit">Leave a Comment</button>

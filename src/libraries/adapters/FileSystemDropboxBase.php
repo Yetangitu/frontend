@@ -26,10 +26,10 @@ class FileSystemDropboxBase
 
   public function deletePhoto($photo)
   {
-    $directory = urlencode(date($this->directoryMask, $photo['dateTaken']));
+    $directory = urlencode(date($this->directoryMask, $photo['date_taken']));
     try
     {
-      $this->dropbox->delete(sprintf('%s/%s/%s', $this->dropboxFolder, $directory, basename($photo['pathOriginal'])));
+      $this->dropbox->delete(sprintf('%s/%s/%s', $this->dropboxFolder, $directory, basename($photo['path_original'])));
     }
     catch(Dropbox_Exception_NotFound $e)
     {
@@ -43,12 +43,12 @@ class FileSystemDropboxBase
     return true;
   }
 
-  public function getFileUrl($photo, $key = 'dateTaken')
+  public function getFileUrl($photo, $key = 'date_taken')
   {
     $directory = urlencode(date($this->directoryMask, $photo[$key]));
     try
     {
-      return $this->dropbox->getFileUrl(sprintf('%s/%s/%s', $this->dropboxFolder, $directory, basename($photo['pathOriginal'])));
+      return $this->dropbox->getFileUrl(sprintf('%s/%s/%s', $this->dropboxFolder, $directory, basename($photo['path_original'])));
     }
     catch(Exception $e)
     {
@@ -58,19 +58,19 @@ class FileSystemDropboxBase
   }
 
   // Gh-1012
-  //  Since we originally used dateUploaded this ensures backwards compatability
+  //  Since we originally used date_uploaded this ensures backwards compatability
   public function getFilePointer($photo)
   {
-    $url = $this->getFileUrl($photo, 'dateTaken');
+    $url = $this->getFileUrl($photo, 'date_taken');
     $fp = fopen($url, 'r');
     if(!$fp)
     {
-      getLogger()->warn(sprintf('Could not load photo %s from dateTaken location. %s', $photo['id'], $url));
-      $url = $this->getFileUrl($photo, 'dateUploaded');
+      getLogger()->warn(sprintf('Could not load photo %s from date_taken location. %s', $photo['id'], $url));
+      $url = $this->getFileUrl($photo, 'date_uploaded');
       $fp = fopen($url, 'r');
 
       if(!$fp)
-        getLogger()->warn(sprintf('Could not load photo %s from dateUploaded location. %s', $photo['id'], $url));
+        getLogger()->warn(sprintf('Could not load photo %s from date_uploaded location. %s', $photo['id'], $url));
     }
 
     return $fp;
@@ -137,7 +137,7 @@ class FileSystemDropboxBase
     return $dropboxStatus;
   }
 
-  public function putPhoto($localFile, $remoteFile, $dateTaken)
+  public function putPhoto($localFile, $remoteFile, $date_taken)
   {
     if(isset($_POST['uploadSource']) && $_POST['uploadSource'] === 'dropbox')
       return true;
@@ -150,7 +150,7 @@ class FileSystemDropboxBase
 
     if(strpos($remoteFile, '/original/') !== false)
     {
-      $directory = urlencode(date($this->directoryMask, $dateTaken));
+      $directory = urlencode(date($this->directoryMask, $date_taken));
       if(!$this->putFileInDirectory($directory, $localFile, basename($remoteFile)))
         return false;
     }
@@ -166,10 +166,10 @@ class FileSystemDropboxBase
     {
       list($localFile, $remoteFileArr) = each($file);
       $remoteFile = $remoteFileArr[0];
-      $dateTaken = $remoteFileArr[1];
+      $date_taken = $remoteFileArr[1];
       if(strpos($remoteFile, '/original/') !== false && file_exists($localFile))
       {
-        $directory = urlencode(date($this->directoryMask, $dateTaken));
+        $directory = urlencode(date($this->directoryMask, $date_taken));
         if(!$this->putFileInDirectory($directory, $localFile, basename($remoteFile)))
           return false;
       }

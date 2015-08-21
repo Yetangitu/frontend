@@ -5,7 +5,7 @@ class TagTest extends PHPUnit_Framework_TestCase
   {
     // to test the write methods
     $this->tag = new Tag();
-    //$this->tag->config = json_decode(json_encode(array('application' => array('appId' => 'foo'), 'user' => array('email' => 'bar'))));
+    //$this->tag->config = json_decode(json_encode(array('application' => array('app_id' => 'foo'), 'user' => array('email' => 'bar'))));
   }
 
   public function testDeleteSuccess()
@@ -102,7 +102,7 @@ class TagTest extends PHPUnit_Framework_TestCase
 
   public function testValidateParams()
   {
-    $tagToValidate = array('countPrivate' => 2, 'countPublic' => 3, 'illegal' => 'badkey');
+    $tagToValidate = array('count_private' => 2, 'count_public' => 3, 'illegal' => 'badkey');
     $res = $this->tag->validateParams($tagToValidate);
     $expected = $tagToValidate;
     unset($expected['illegal']);

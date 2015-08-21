@@ -258,7 +258,7 @@
             var dateAdjustedValue = formParams[i].value;
             for(var innerI=0; innerI<idsArr.length; innerI++) {
               op.data.store.Photos.get(idsArr[innerI])
-              .set({dateTaken: dateAdjustedValue}, {silent: true})
+              .set({date_taken: dateAdjustedValue}, {silent: true})
               .save();
             }
             OP.Util.fire('callback:remove-spinners');

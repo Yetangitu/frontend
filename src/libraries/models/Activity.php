@@ -19,11 +19,11 @@ class Activity extends BaseModel
       $this->user = new User;
   }
 
-  public function create($elementId, $attributes)
+  public function create($element_id, $attributes)
   {
-    if(empty($elementId) || empty($attributes))
+    if(empty($element_id) || empty($attributes))
     {
-      $this->logger->warn('When creating an activity one of the following attributes were not passed, elementId or attributes');
+      $this->logger->warn('When creating an activity one of the following attributes were not passed, element_id or attributes');
       return false;
     }
 
@@ -44,13 +44,13 @@ class Activity extends BaseModel
 
     $attributes['owner'] = $this->owner;
     $attributes['actor'] = $this->getActor();
-    return $this->db->putActivity($id, $elementId, $attributes);
+    return $this->db->putActivity($id, $element_id, $attributes);
   }
 
-  public function deleteForElement($elementId, $types)
+  public function deleteForElement($element_id, $types)
   {
     $types = (array)$types;
-    return $this->db->deleteActivitiesForElement($elementId, $types);
+    return $this->db->deleteActivitiesForElement($element_id, $types);
   }
 
   public function list_($filters, $pageSize)
@@ -74,8 +74,8 @@ class Activity extends BaseModel
   private function getDefaultAttributes()
   {
     return array(
-      'appId' => $this->config->application->appId,
-      'dateCreated' => time()
+      'app_id' => $this->config->application->app_id,
+      'date_created' => time()
     );
   }
 
@@ -90,7 +90,7 @@ class Activity extends BaseModel
   private function whitelistParams($attributes)
   {
     $returnAttrs = array();
-    $matches = array('id' => 1, 'owner' => 1, 'appId' => 1, 'type' => 1, 'data' => 1, 'permission' => 1, 'dateCreated' => 1);
+    $matches = array('id' => 1, 'owner' => 1, 'app_id' => 1, 'type' => 1, 'data' => 1, 'permission' => 1, 'date_created' => 1);
 
     foreach($attributes as $key => $val)
     {

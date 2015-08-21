@@ -104,20 +104,20 @@ $sql = <<<SQL
 SQL;
 $status = $status && mysql_2_0_1($sql);
 
-// dateSortByDay
+// date_sort_by_day
 $sql = <<<SQL
-  ALTER TABLE `{$this->mySqlTablePrefix}photo` ADD `dateSortByDay` VARCHAR( 14 ) NOT NULL AFTER `dateUploadedYear`;
+  ALTER TABLE `{$this->mySqlTablePrefix}photo` ADD `date_sort_by_day` VARCHAR( 14 ) NOT NULL AFTER `date_uploadedYear`;
 SQL;
 $status = $status && mysql_2_0_1($sql);
 
 $sql = <<<SQL
-  UPDATE `{$this->mySqlTablePrefix}photo` SET dateSortByDay= CONCAT(
-    CAST(dateTakenYear AS CHAR),
-    LPAD(CAST(dateTakenMonth AS CHAR),2,"0"),
-    LPAD(CAST(dateTakenDay AS CHAR),2,"0"),
-    LPAD(23-HOUR(FROM_UNIXTIME(dateTaken)),2,"0"),
-    LPAD(59-MINUTE(FROM_UNIXTIME(dateTaken)),2,"0"),
-    LPAD(59-SECOND(FROM_UNIXTIME(dateTaken)),2,"0")
+  UPDATE `{$this->mySqlTablePrefix}photo` SET date_sort_by_day= CONCAT(
+    CAST(date_taken_year AS CHAR),
+    LPAD(CAST(date_taken_month AS CHAR),2,"0"),
+    LPAD(CAST(date_taken_day AS CHAR),2,"0"),
+    LPAD(23-HOUR(FROM_UNIXTIME(date_taken)),2,"0"),
+    LPAD(59-MINUTE(FROM_UNIXTIME(date_taken)),2,"0"),
+    LPAD(59-SECOND(FROM_UNIXTIME(date_taken)),2,"0")
   );
 SQL;
 $status = $status && mysql_2_0_1($sql);

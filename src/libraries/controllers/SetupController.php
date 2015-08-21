@@ -33,7 +33,7 @@ class SetupController extends BaseController
   public function setup()
   {
     $step = 1;
-    $appId = 'openphoto-frontend';
+    $app_id = 'openphoto-frontend';
     getSession('step', 1);
 
     $imageLibs = array();
@@ -47,6 +47,10 @@ class SetupController extends BaseController
     $imageLibrary = '';
     if(getConfig()->get('modules') != null)
       $imageLibrary = getConfig()->get('modules')->image;
+
+    $databases = array();
+    $databases['MySql'] = 'MySql';
+    $databases['PostgreSql'] = 'PostgreSql';
 
     $database = '';
     $filesystem = '';
@@ -76,8 +80,8 @@ class SetupController extends BaseController
       $qs = '?edit';
 
     $template = sprintf('%s/setup.php', getConfig()->get('paths')->templates);
-    $body = $this->template->get($template, array('filesystem' => $filesystem, 'database' => $database, 'themes' => $themes, 'theme' => $theme,
-      'imageLibs' => $imageLibs, 'imageLibrary' => $imageLibrary, 'appId' => $appId, 'step' => $step, 'email' => $email, 'password' => '', 'qs' => $qs, 'errors' => $errors));
+    $body = $this->template->get($template, array('filesystem' => $filesystem, 'databases' => $databases, 'database' => $database, 'themes' => $themes, 'theme' => $theme,
+      'imageLibs' => $imageLibs, 'imageLibrary' => $imageLibrary, 'app_id' => $app_id, 'step' => $step, 'email' => $email, 'password' => '', 'qs' => $qs, 'errors' => $errors));
     $this->theme->display('template.php', array('body' => $body, 'page' => 'setup'));
   }
 
@@ -184,7 +188,7 @@ class SetupController extends BaseController
   public function setupPost()
   {
     $step = 1;
-    $appId = isset($_POST['appId']) ? $_POST['appId'] : '';
+    $app_id = isset($_POST['app_id']) ? $_POST['app_id'] : '';
     $email = isset($_POST['email']) ? $_POST['email'] : '';
     $password = isset($_POST['password']) ? $_POST['password'] : '';
     $theme = isset($_POST['theme']) ? $_POST['theme'] : '';
@@ -196,7 +200,7 @@ class SetupController extends BaseController
     if($errors === false)
     {
       getSession()->set('step', 2);
-      getSession()->set('appId', $appId);
+      getSession()->set('app_id', $app_id);
       getSession()->set('ownerEmail', $email);
       getSession()->set('password', $password);
       getSession()->set('theme', $theme);
@@ -209,7 +213,7 @@ class SetupController extends BaseController
     }
 
     $template = sprintf('%s/setup.php', getConfig()->get('paths')->templates);
-    $body = $this->template->get($template, array('email' => $email, 'password' => $password, 'appId' => $appId, 'step' => $step, 'errors' => $errors));
+    $body = $this->template->get($template, array('email' => $email, 'password' => $password, 'app_id' => $app_id, 'step' => $step, 'errors' => $errors));
     $this->theme->display('template.php', array('body' => $body, 'page' => 'setup'));
   }
 
@@ -237,6 +241,10 @@ class SetupController extends BaseController
     if(getConfig()->get('modules') != null)
       $imageLibrary = getConfig()->get('modules')->image;
 
+    $databases = array();
+    $databases['MySql'] = 'MySql';
+    $databases['PostgreSql'] = 'PostgreSql';
+
     $database = '';
     $filesystem = '';
     if(getConfig()->get('systems') != null)
@@ -250,7 +258,7 @@ class SetupController extends BaseController
       $qs = '?edit';
 
     $template = sprintf('%s/setup.php', getConfig()->get('paths')->templates);
-    $body = $this->template->get($template, array('themes' => array(), 'imageLibs' => $imageLibs, 'appId' => 'openphoto-frontend', 'imageLibrary' => $imageLibrary, 'database' => $database, 'filesystem' => $filesystem, 'qs' => $qs, 'step' => $step));
+    $body = $this->template->get($template, array('themes' => array(), 'imageLibs' => $imageLibs, 'app_id' => 'openphoto-frontend', 'imageLibrary' => $imageLibrary, 'databases' => $databases, 'database' => $database, 'filesystem' => $filesystem, 'qs' => $qs, 'step' => $step));
     $this->theme->display('template.php', array('body' => $body, 'page' => 'setup'));
   }
 
@@ -295,11 +303,12 @@ class SetupController extends BaseController
     $secret = $this->getSecret();
     $step = 3;
     $password = getSession()->get('password');
-    $appId = getSession()->get('appId');
+    $app_id = getSession()->get('app_id');
     $database = getSession()->get('database');
     $filesystem = getSession()->get('fileSystem');
     $usesAws = (preg_match('/S3|DreamObjects/', getSession()->get('fileSystem'))) ? true : false;
     $usesMySql = (getSession()->get('database') == 'MySql') ? true : false;
+    $usesPostgreSql = (getSession()->get('database') == 'PostgreSql') ? true : false;
     $usesLocalFs = (stristr(getSession()->get('fileSystem'), 'Local') !== false) ? true : false;
     $usesS3 = (preg_match('/S3|DreamObjects/', getSession()->get('fileSystem'))) ? true : false;
     $usesDropbox = (stristr(getSession()->get('fileSystem'), 'Dropbox') !== false) ? true : false;
@@ -348,6 +357,16 @@ class SetupController extends BaseController
       $mySqlTablePrefix = $mysql->mySqlTablePrefix;
     }
 
+    if(getConfig()->get('postgresql') != null)
+    {
+      $postgresql = getConfig()->get('postgresql');
+      $postgreSqlHost = $postgresql->postgreSqlHost;
+      $postgreSqlUser = $postgresql->postgreSqlUser;
+      $postgreSqlPassword = $this->utility->decrypt($postgresql->postgreSqlPassword, $secret);
+      $postgreSqlDb = $postgresql->postgreSqlDb;
+      $postgreSqlTablePrefix = $postgresql->postgreSqlTablePrefix;
+    }
+
     if(getConfig()->get('localfs') != null)
     {
       $fsRoot = getConfig()->get('localfs')->fsRoot;
@@ -370,13 +389,17 @@ class SetupController extends BaseController
 
     $template = sprintf('%s/setup.php', getConfig()->get('paths')->templates);
     // copied to/from setup3Post()
-    $body = $this->template->get($template, array('step' => $step, 'password' => $password,'themes' => $themes, 'usesAws' => $usesAws, 'usesMySql' => $usesMySql,
+    $body = $this->template->get($template, array('step' => $step, 'password' => $password,'themes' => $themes, 'usesAws' => $usesAws,
+      'usesMySql' => $usesMySql, 'usesPostgreSql' => $usesPostgreSql,
       'database' => $database, 'filesystem' => $filesystem, 'usesLocalFs' => $usesLocalFs, 'usesS3' => $usesS3,
       'awsKey' => $awsKey, 'awsSecret' => $awsSecret, 's3Bucket' => $s3Bucket,
       'mySqlHost' => $mySqlHost, 'mySqlUser' => $mySqlUser, 'mySqlDb' => $mySqlDb,
-      'mySqlPassword' => $mySqlPassword, 'mySqlTablePrefix' => $mySqlTablePrefix, 'fsRoot' => $fsRoot, 'fsHost' => $fsHost,
+      'mySqlPassword' => $mySqlPassword, 'mySqlTablePrefix' => $mySqlTablePrefix,
+      'postgreSqlHost' => $postgreSqlHost, 'postgreSqlUser' => $postgreSqlUser, 'postgreSqlDb' => $postgreSqlDb,
+      'postgreSqlPassword' => $postgreSqlPassword, 'postgreSqlTablePrefix' => $postgreSqlTablePrefix,
+      'fsRoot' => $fsRoot, 'fsHost' => $fsHost,
       'usesDropbox' => $usesDropbox, 'dropboxKey' => $dropboxKey, 'dropboxSecret' => $dropboxSecret, 'dropboxToken' => $dropboxToken,
-      'dropboxTokenSecret' => $dropboxTokenSecret, 'dropboxFolder' => $dropboxFolder, 'qs' => $qs, 'appId' => $appId, 'errors' => $errors));
+      'dropboxTokenSecret' => $dropboxTokenSecret, 'dropboxFolder' => $dropboxFolder, 'qs' => $qs, 'app_id' => $app_id, 'errors' => $errors));
 
     $this->theme->display('template.php', array('body' => $body, 'page' => 'setup'));
   }
@@ -388,6 +411,8 @@ class SetupController extends BaseController
     */
   public function setup3Post()
   {
+    getLogger()->info("Beginning setup3Post");
+
     getSession()->set('isEditMode', isset($_GET['edit']));
     $isEditMode = getSession()->get('isEditMode');
     extract($this->getDefaultConfigParams());
@@ -395,15 +420,17 @@ class SetupController extends BaseController
     $secret = $this->getSecret();
     $database = getSession()->get('database');
     $filesystem = getSession()->get('fileSystem');
-    $appId = getSession()->get('appId');
+    $app_id = getSession()->get('app_id');
     $password = getSession()->get('password');
     $usesAws = (preg_match('/S3|DreamObjects/', $filesystem)) ? true : false;
     $usesMySql = (getSession()->get('database') == 'MySql') ? true : false;
+    $usesPostgreSql = (getSession()->get('database') == 'PostgreSql') ? true : false;
     $usesLocalFs = (stristr(getSession()->get('fileSystem'), 'Local') !== false) ? true : false;
     $usesS3 = (preg_match('/S3|DreamObjects/', $filesystem)) ? true : false;
     $usesDropbox = (stristr(getSession()->get('fileSystem'), 'Dropbox') !== false) ? true : false;
     $awsErrors = false;
     $mySqlErrors = false;
+    $postgreSqlErrors = false;
     $localFsErrors = false;
     $fsErrors = false;
     $dbErrors = false;
@@ -444,6 +471,22 @@ class SetupController extends BaseController
       $mySqlErrors = getForm()->hasErrors($input);
     }
 
+    if($usesPostgreSql)
+    {
+      $postgreSqlHost = $_POST['postgreSqlHost'];
+      $postgreSqlUser = $_POST['postgreSqlUser'];
+      $postgreSqlPassword = $_POST['postgreSqlPassword'];
+      $postgreSqlDb = $_POST['postgreSqlDb'];
+      $postgreSqlTablePrefix = $_POST['postgreSqlTablePrefix'];
+      $input = array(
+        array('PostgreSQL Host', $postgreSqlHost, 'required'),
+        array('PostgreSQL Username', $postgreSqlUser, 'required'),
+        array('PostgreSQL Password', $postgreSqlPassword, 'required'),
+        array('PostgreSQL Database', $postgreSqlDb, 'required')
+      );
+      $postgreSqlErrors = getForm()->hasErrors($input);
+    }
+
     if($usesLocalFs)
     {
       $fsRoot = $_POST['fsRoot'];
@@ -465,7 +508,7 @@ class SetupController extends BaseController
       $dropboxFolder = $_POST['dropboxFolder'];
     }
 
-    if($awsErrors === false && $mySqlErrors === false && $localFsErrors === false)
+    if($awsErrors === false && $mySqlErrors === false && $postgreSqlErrors === false && $localFsErrors === false)
     {
       $credentials = new stdClass;
       if($usesAws)
@@ -499,6 +542,20 @@ class SetupController extends BaseController
         $mysql->mySqlPassword = $this->utility->encrypt($mySqlPassword, $secret);
         $mysql->mySqlDb = $mySqlDb;
         $mysql->mySqlTablePrefix = $mySqlTablePrefix;
+      }
+      if($usesPostgreSql)
+      {
+        getSession()->set('postgreSqlHost', $postgreSqlHost);
+        getSession()->set('postgreSqlUser', $postgreSqlUser);
+        getSession()->set('postgreSqlPassword', $this->utility->encrypt($postgreSqlPassword, $secret));
+        getSession()->set('postgreSqlDb', $postgreSqlDb);
+        getSession()->set('postgreSqlTablePrefix', $postgreSqlTablePrefix);
+        $postgresql = new stdClass;
+        $postgresql->postgreSqlHost = $postgreSqlHost;
+        $postgresql->postgreSqlUser = $postgreSqlUser;
+        $postgresql->postgreSqlPassword = $this->utility->encrypt($postgreSqlPassword, $secret);
+        $postgresql->postgreSqlDb = $postgreSqlDb;
+        $postgresql->postgreSqlTablePrefix = $postgreSqlTablePrefix;
       }
       if($usesLocalFs)
       {
@@ -539,7 +596,11 @@ class SetupController extends BaseController
         getConfig()->set('aws', $aws);
       if($usesMySql)
         getConfig()->set('mysql', $mysql);
+      if($usesPostgreSql)
+        getLogger()->info("Using postgresql");
+        getConfig()->set('postgresql', $postgresql);
       if($usesLocalFs)
+        getLogger()->info("Using localfs");
         getConfig()->set('localfs', $fs);
       if($usesDropbox)
         getConfig()->set('dropbox', $dropbox);
@@ -564,6 +625,8 @@ class SetupController extends BaseController
       {
         if($usesMySql)
           $dbErrors[] = 'We were unable to initialize your account in MySql. <ul><li>Please verify that the host, username and password are correct and have proper permissions to create a database.</li><li>Make sure your email address is not already in use.</li></ul>';
+        else if($usesPostgreSql)
+          $dbErrors[] = 'We were unable to initialize your account in PostgreSql. <ul><li>Please verify that the host, username and password are correct and have proper permissions to create a database.</li><li>Make sure your email address is not already in use.</li></ul>';
         else
           $dbErrors[] = 'An unknown error occurred while setting up your database. Check your error logsto see if there\'s more information about the error.';
 
@@ -572,9 +635,9 @@ class SetupController extends BaseController
       try {
         if(getConfig()->get('site')->allowOpenPhotoLogin == 1) {
           if($isEditMode)
-            $dbObj->postUser(array('password' => sha1(sprintf('%s-%s', $password, getConfig()->get('secrets')->passwordSalt))));
+            $dbObj->postUser(array('password' => $this->user->encryptPassword($password)));
           else
-            $dbObj->putUser(array('password' => sha1(sprintf('%s-%s', $password, getConfig()->get('secrets')->passwordSalt))));
+            $dbObj->putUser(array('password' => $this->user->encryptPassword($password)));
         }
         else {
           if($isEditMode)
@@ -616,6 +679,8 @@ class SetupController extends BaseController
       $errors = array_merge($errors, $awsErrors);
     if(is_array($mySqlErrors))
       $errors = array_merge($errors, $mySqlErrors);
+    if(is_array($postgreSqlErrors))
+      $errors = array_merge($errors, $postgreSqlErrors);
     if(is_array($localFsErrors))
       $errors = array_merge($errors, $localFsErrors);
     if(is_array($fsErrors))
@@ -631,13 +696,17 @@ class SetupController extends BaseController
 
     $template = sprintf('%s/setup.php', getConfig()->get('paths')->templates);
     // copied to/from setup3()
-    $body = $this->template->get($template, array('step' => $step, 'password' => $password,'themes' => $themes, 'usesAws' => $usesAws, 'usesMySql' => $usesMySql,
+    $body = $this->template->get($template, array('step' => $step, 'password' => $password,'themes' => $themes, 'usesAws' => $usesAws,
+      'usesMySql' => $usesMySql, 'usesPostgreSql' => $usesPostgreSql,
       'database' => $database, 'filesystem' => $filesystem, 'usesLocalFs' => $usesLocalFs, 'usesS3' => $usesS3,
       'awsKey' => $awsKey, 'awsSecret' => $awsSecret, 's3Bucket' => $s3Bucket,
       'mySqlHost' => $mySqlHost, 'mySqlUser' => $mySqlUser, 'mySqlDb' => $mySqlDb,
-      'mySqlPassword' => $mySqlPassword, 'mySqlTablePrefix' => $mySqlTablePrefix, 'fsRoot' => $fsRoot, 'fsHost' => $fsHost,
+      'mySqlPassword' => $mySqlPassword, 'mySqlTablePrefix' => $mySqlTablePrefix,
+      'postgreSqlHost' => $postgreSqlHost, 'postgreSqlUser' => $postgreSqlUser, 'postgreSqlDb' => $postgreSqlDb,
+      'postgreSqlPassword' => $postgreSqlPassword, 'postgreSqlTablePrefix' => $postgreSqlTablePrefix,
+      'fsRoot' => $fsRoot, 'fsHost' => $fsHost,
       'usesDropbox' => $usesDropbox, 'dropboxKey' => $dropboxKey, 'dropboxSecret' => $dropboxSecret, 'dropboxToken' => $dropboxToken,
-      'dropboxTokenSecret' => $dropboxTokenSecret, 'dropboxFolder' => $dropboxFolder, 'qs' => $qs, 'appId' => $appId, 'errors' => $errors));
+      'dropboxTokenSecret' => $dropboxTokenSecret, 'dropboxFolder' => $dropboxFolder, 'qs' => $qs, 'app_id' => $app_id, 'errors' => $errors));
     $this->theme->display('template.php', array('body' => $body, 'page' => 'setup'));
   }
 
@@ -673,8 +742,9 @@ class SetupController extends BaseController
 
   private function getDefaultConfigParams()
   {
-    return array('themes' => array(), 'awsKey' => '', 'awsSecret' => '', 's3Bucket' => '', 'mySqlHost' => '',
-      'mySqlUser' => '', 'mySqlPassword' => '', 'mySqlDb' => '', 'mySqlTablePrefix' => '',
+    return array('themes' => array(), 'awsKey' => '', 'awsSecret' => '', 's3Bucket' => '',
+      'mySqlHost' => '', 'mySqlUser' => '', 'mySqlPassword' => '', 'mySqlDb' => '', 'mySqlTablePrefix' => '',
+      'postgreSqlHost' => '', 'postgreSqlUser' => '', 'postgreSqlPassword' => '', 'postgreSqlDb' => '', 'postgreSqlTablePrefix' => '',
       'fsRoot' => '', 'fsHost' => '', 'dropboxFolder' => '', 'dropboxKey' => '', 'dropboxSecret' => '',
       'dropboxKey' => '', 'dropboxToken' => '', 'dropboxTokenSecret' => '', 'errors' => '');
   }
@@ -773,6 +843,11 @@ class SetupController extends BaseController
       '{mySqlPassword}' => "",
       '{mySqlDb}' => "",
       '{mySqlTablePrefix}' => "",
+      '{postgreSqlHost}' => "",
+      '{postgreSqlUser}' => "",
+      '{postgreSqlPassword}' => "",
+      '{postgreSqlDb}' => "",
+      '{postgreSqlTablePrefix}' => "",
       '{dropboxKey}' => "",
       '{dropboxSecret}' => "",
       '{dropboxToken}' => "",
@@ -790,7 +865,7 @@ class SetupController extends BaseController
     //   flowDropboxKey, flowDropboxSecret, mySqlPassword, mySqlUser, password, secret, step
     // It is safer to explicitly list keys that are ok to log, rather than exclude those that are
     // sensitive, as one might forget to exclude new keys.
-    $settingsToLog = array('step', 'appId', 'ownerEmail', 'isEditMode', 'theme', 'imageLibrary', 'database', 'mySqlDb', 'mySqlHost', 'mySqlTablePrefix', 'fileSystem', 'fsHost', 'fsRoot', 'dropboxFolder', 'flowDropboxFolder', 's3BucketName');
+    $settingsToLog = array('step', 'app_id', 'ownerEmail', 'isEditMode', 'theme', 'imageLibrary', 'database', 'mySqlDb', 'mySqlHost', 'mySqlTablePrefix', 'fileSystem', 'fsHost', 'fsRoot', 'dropboxFolder', 'flowDropboxFolder', 's3BucketName');
 
     $pReplace = array();
     $session = getSession()->getAll();

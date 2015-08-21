@@ -76,7 +76,7 @@ class MediaTest extends PHPUnit_Framework_TestCase
     $this->config = new stdClass;
     $this->config->site = new stdClass;
     $this->config->application = new stdClass;
-    $this->config->application->appId = 'appId';
+    $this->config->application->app_id = 'app_id';
     $this->config->photos = new stdClass;
     $this->config->photos->autoTagWithDate = 1;
     $this->config->user = new stdClass;
@@ -143,9 +143,9 @@ class MediaTest extends PHPUnit_Framework_TestCase
     $this->media->inject('fs', $fs);
     $this->media->inject('config', $this->config);
 
-    $attr = array('tags' => '1234', 'filenameOriginal' => '');
+    $attr = array('tags' => '1234', 'filename_original' => '');
     $res = $this->media->prepareAttributes($attr, $this->photo, 'passedin');
-    $this->assertEquals('passedin', $res['filenameOriginal']);
+    $this->assertEquals('passedin', $res['filename_original']);
   }
 
   public function testPrepareAttributesWithOriginalFilenameOverride()
@@ -160,9 +160,9 @@ class MediaTest extends PHPUnit_Framework_TestCase
     $this->media->inject('fs', $fs);
     $this->media->inject('config', $this->config);
 
-    $attr = array('tags' => '1234', 'filenameOriginal' => 'attribute');
+    $attr = array('tags' => '1234', 'filename_original' => 'attribute');
     $res = $this->media->prepareAttributes($attr, $this->photo, 'passedin');
-    $this->assertEquals('attribute', $res['filenameOriginal']);
+    $this->assertEquals('attribute', $res['filename_original']);
   }
 
   public function testPrepareAttributesWithFSMetaDataNull()
@@ -211,7 +211,7 @@ class MediaTest extends PHPUnit_Framework_TestCase
     $this->media->inject('config', $this->config);
     $res = $this->media->requireDefaults(array('foo' => 'bar'));
     $this->assertEquals('bar', $res['foo'], 'Make sure passed in param is present');
-    $this->assertEquals('appId', $this->config->application->appId, 'Confirm appId is added');
+    $this->assertEquals('app_id', $this->config->application->app_id, 'Confirm app_id is added');
   }
 
   public function testRequireDefaultsOverride()
@@ -222,8 +222,8 @@ class MediaTest extends PHPUnit_Framework_TestCase
       ->will($this->returnValue('fshost'));
     $this->media->inject('fs', $fs);
     $this->media->inject('config', $this->config);
-    $res = $this->media->requireDefaults(array('appId' => 'bar'));
-    $this->assertEquals('bar', $res['appId'], 'Confirm appId is overridden');
+    $res = $this->media->requireDefaults(array('app_id' => 'bar'));
+    $this->assertEquals('bar', $res['app_id'], 'Confirm app_id is overridden');
   }
 
   public function testSetDateAttributesPreservesExistingParameters()
@@ -235,29 +235,29 @@ class MediaTest extends PHPUnit_Framework_TestCase
   public function testSetDateAttributesWithNoDateTaken()
   {
     $res = $this->media->setDateAttributes(array());
-    $this->assertTrue(isset($res['dateTaken']), 'dateTaken should be set if not passed in');
-    $this->assertTrue($res['dateTaken'] > (time()-30), 'dateTaken should be set if not passed in');
+    $this->assertTrue(isset($res['date_taken']), 'date_taken should be set if not passed in');
+    $this->assertTrue($res['date_taken'] > (time()-30), 'date_taken should be set if not passed in');
   }
 
   public function testSetDateAttributesWithPriorDateTaken()
   {
-    $res = $this->media->setDateAttributes(array('dateTaken'=>1293304870));
-    $this->assertEquals(1293304870, $res['dateTaken'], 'dateTaken should be preserved');
-    $this->assertEquals(12, $res['dateTakenMonth'], 'dateTaken should be preserved');
+    $res = $this->media->setDateAttributes(array('date_taken'=>1293304870));
+    $this->assertEquals(1293304870, $res['date_taken'], 'date_taken should be preserved');
+    $this->assertEquals(12, $res['date_takenMonth'], 'date_taken should be preserved');
   }
 
   public function testSetDateAttributesWithNoDateUploaded()
   {
     $res = $this->media->setDateAttributes(array());
-    $this->assertTrue(isset($res['dateUploaded']), 'dateUploaded should be set if not passed in');
-    $this->assertTrue($res['dateUploaded'] > (time()-30), 'dateUploaded should be set if not passed in');
+    $this->assertTrue(isset($res['date_uploaded']), 'date_uploaded should be set if not passed in');
+    $this->assertTrue($res['date_uploaded'] > (time()-30), 'date_uploaded should be set if not passed in');
   }
 
   public function testSetDateAttributesWithPriorDateUploaded()
   {
-    $res = $this->media->setDateAttributes(array('dateUploaded'=>1293304870));
-    $this->assertEquals(1293304870, $res['dateUploaded'], 'dateUploaded should be preserved');
-    $this->assertEquals(12, $res['dateUploadedMonth'], 'dateUploaded should be preserved');
+    $res = $this->media->setDateAttributes(array('date_uploaded'=>1293304870));
+    $this->assertEquals(1293304870, $res['date_uploaded'], 'date_uploaded should be preserved');
+    $this->assertEquals(12, $res['date_uploadedMonth'], 'date_uploaded should be preserved');
   }
 
   public function testSetExifPreservesExistingParameters()
@@ -294,18 +294,18 @@ class MediaTest extends PHPUnit_Framework_TestCase
   {
     $this->config->photos->autoTagWithDate = 0;
     $this->media->inject('config', $this->config);
-    $res = $this->media->setDateTagsByAttributes(array('dateTaken' => '1293304870'));
+    $res = $this->media->setDateTagsByAttributes(array('date_taken' => '1293304870'));
     $this->assertFalse(isset($res['tags']));
   }
 
   public function testSetTagAttributesAutoTagWithDateYes()
   {
     $this->media->inject('config', $this->config);
-    $res = $this->media->setTagAttributes(array('dateTaken' => '1293304870'));
+    $res = $this->media->setTagAttributes(array('date_taken' => '1293304870'));
     $this->assertTrue(strstr($res['tags'], 'December') !== false, 'Month tags');
     $this->assertTrue(strstr($res['tags'], '2010') !== false, 'Year Tags');
     // preserve and add
-    $res = $this->media->setTagAttributes(array('dateTaken' => '1293304870','tags'=>'one'));
+    $res = $this->media->setTagAttributes(array('date_taken' => '1293304870','tags'=>'one'));
     $this->assertTrue(strstr($res['tags'], 'one') !== false, 'one tag');
     $this->assertTrue(strstr($res['tags'], '2010') !== false, 'Year Tags');
   }
@@ -314,10 +314,10 @@ class MediaTest extends PHPUnit_Framework_TestCase
   {
     $this->config->photos->autoTagWithDate = 0;
     $this->media->inject('config', $this->config);
-    $res = $this->media->setTagAttributes(array('dateTaken' => '1293304870'));
+    $res = $this->media->setTagAttributes(array('date_taken' => '1293304870'));
     $this->assertTrue(!isset($res['tags']), 'No tags should exist if not passed in');
     // preserve and skip
-    $res = $this->media->setTagAttributes(array('dateTaken' => '1293304870','tags'=>'one'));
+    $res = $this->media->setTagAttributes(array('date_taken' => '1293304870','tags'=>'one'));
     $this->assertTrue(strstr($res['tags'], 'one') !== false, 'one tag');
     $this->assertTrue(strstr($res['tags'], '2010') === false, 'Year Tags');
   }
@@ -325,7 +325,7 @@ class MediaTest extends PHPUnit_Framework_TestCase
   public function testSetPaths()
   {
     $attrs = array('foo' => 'bar');
-    $paths = array( 'pathOriginal' => 'original', 'pathBase' => 'base');
+    $paths = array( 'path_original' => 'original', 'path_base' => 'base');
     $merged = array_merge($attrs, $paths);
     $res = $this->media->setPathAttributes($attrs, $paths);
     $this->assertEquals($merged, $res);
@@ -333,8 +333,8 @@ class MediaTest extends PHPUnit_Framework_TestCase
 
   public function testSetPathsWithInvlidOverrideAttempt()
   {
-    $attrs = array('foo' => 'bar', 'pathOriginal' => 'invalid');
-    $paths = array( 'pathOriginal' => 'original', 'pathBase' => 'base');
+    $attrs = array('foo' => 'bar', 'path_original' => 'invalid');
+    $paths = array( 'path_original' => 'original', 'path_base' => 'base');
     $merged = array_merge($attrs, $paths);
     $res = $this->media->setPathAttributes($attrs, $paths);
     $this->assertEquals($merged, $res);
@@ -342,7 +342,7 @@ class MediaTest extends PHPUnit_Framework_TestCase
 
   public function testSetMediaSpecificAttributesForVideo()
   {
-    $attrs = array('foo' => 'bar', 'pathOriginal' => 'invalid');
+    $attrs = array('foo' => 'bar', 'path_original' => 'invalid');
     $res = $this->media->setMediaSpecificAttributes($attrs, $this->video);
     $this->assertTrue($res['video'], $res);
   }
@@ -352,12 +352,12 @@ class MediaTest extends PHPUnit_Framework_TestCase
     $this->config->photos->autoTagWithDate = 0;
     $this->media->inject('config', $this->config);
 
-    $attrs = array('foo' => 'bar', 'dateTaken' => '1293304870', 'tags' => 'one,two,three');
+    $attrs = array('foo' => 'bar', 'date_taken' => '1293304870', 'tags' => 'one,two,three');
     $res = $this->media->SetDateTagsByAttributes($attrs);
     $this->assertEquals($attrs, $res, 'When autoTagWithDate is 0 then the attributes should not be altered when tags exist'); 
 
 
-    $attrs = array('foo' => 'bar', 'dateTaken' => '1293304870');
+    $attrs = array('foo' => 'bar', 'date_taken' => '1293304870');
     $res = $this->media->SetDateTagsByAttributes($attrs);
     $this->assertEquals($attrs, $res, 'When autoTagWithDate is 0 then the attributes should not be altered even if no tags exist'); 
   }
@@ -366,12 +366,12 @@ class MediaTest extends PHPUnit_Framework_TestCase
   {
     $this->media->inject('config', $this->config);
 
-    $attrs = array('foo' => 'bar', 'dateTaken' => '1293304870', 'tags' => 'one,two,three');
+    $attrs = array('foo' => 'bar', 'date_taken' => '1293304870', 'tags' => 'one,two,three');
     $res = $this->media->SetDateTagsByAttributes($attrs);
     $attrs['tags'] .= ',December,2010';
     $this->assertEquals($attrs, $res, 'Date tags should be appended to list'); 
 
-    $attrs = array('foo' => 'bar', 'dateTaken' => '1293304870');
+    $attrs = array('foo' => 'bar', 'date_taken' => '1293304870');
     $res = $this->media->SetDateTagsByAttributes($attrs);
     $attrs['tags'] = 'December,2010';
     $this->assertEquals($attrs, $res, 'When no tags exist the tags attribute should be created'); 
@@ -379,8 +379,8 @@ class MediaTest extends PHPUnit_Framework_TestCase
 
   public function testWhitelistAttributes()
   {
-    $res = $this->media->whitelistAttributes(array('invalid' => 'invalid', 'dateTaken' => '1293304870','tags'=>'one'));
-    $this->assertTrue(isset($res['dateTaken']), 'dateTaken is valid');
+    $res = $this->media->whitelistAttributes(array('invalid' => 'invalid', 'date_taken' => '1293304870','tags'=>'one'));
+    $this->assertTrue(isset($res['date_taken']), 'date_taken is valid');
     $this->assertTrue(!isset($res['invalid']), 'invalid is not valid');
   }
 

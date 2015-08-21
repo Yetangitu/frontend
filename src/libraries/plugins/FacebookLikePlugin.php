@@ -40,7 +40,7 @@ class FacebookLikePlugin extends PluginBase
 
     $utility = new Utility;
     $tags = '';
-    $title = $photo['title'] !== '' ? $photo['title'] : "{$photo['filenameOriginal']} on Trovebox";
+    $title = $photo['title'] !== '' ? $photo['title'] : "{$photo['filename_original']} on Trovebox";
     $tags .= $this->addTag('og:site_name', 
       sprintf('%s Trovebox site', 
         ucwords(
@@ -52,7 +52,7 @@ class FacebookLikePlugin extends PluginBase
     );;
     $tags .= $this->addTag('og:title', $photo['title']);
     $tags .= $this->addTag('og:url', $photo['url']);
-    $tags .= $this->addTag('og:image', $photo['pathBase']);
+    $tags .= $this->addTag('og:image', $photo['path_base']);
     return $tags;
   }
 

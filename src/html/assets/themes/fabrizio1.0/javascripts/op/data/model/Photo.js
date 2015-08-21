@@ -15,10 +15,10 @@
             if(changedParams.hasOwnProperty(i)) {
               if(i == 'active') {
                 isRestore = changedParams[i];
-              } else if(i == 'dateTaken') {
+              } else if(i == 'date_taken') {
                 if(changedParams[i].search(/^([+-])/) === 0) {
                   // add or subtract units. See gh-321
-                  options.data[i] = phpjs.strtotime(changedParams[i], model.previous('dateTaken'));
+                  options.data[i] = phpjs.strtotime(changedParams[i], model.previous('date_taken'));
                 } else {
                   options.data[i] = phpjs.strtotime(changedParams[i]);
                 }

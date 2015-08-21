@@ -107,7 +107,7 @@ class ApiTagController extends ApiBaseController
     if($userObj->isAdmin())
       $filters['permission'] = 0;
 
-    $tagField = $userObj->isAdmin() ? 'countPrivate' : 'countPublic';
+    $tagField = $userObj->isAdmin() ? 'count_private' : 'count_public';
     $tagsFromDb = $this->tag->getTags($filters);
     $tags = array(); // see issue #795 why we don't operate directly on $tagsFromDb
 
@@ -118,7 +118,7 @@ class ApiTagController extends ApiBaseController
         if(strlen($tag['id']) === 0)
           continue;
         $tag['count'] = intval($tag[$tagField]);
-        unset($tag['countPrivate'], $tag['countPublic']);
+        unset($tag['count_private'], $tag['count_public']);
         $tags[] = $tag;
       }
     }

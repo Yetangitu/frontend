@@ -70,7 +70,7 @@ class FileSystemAppDotNetBase
     $fp = fopen($url, 'r');
     if(!$fp)
     {
-      getLogger()->warn(sprintf('Could not load photo %s from dateTaken location. %s', $photo['id'], $url));
+      getLogger()->warn(sprintf('Could not load photo %s from date_taken location. %s', $photo['id'], $url));
       return false;
     }
 
@@ -146,7 +146,7 @@ class FileSystemAppDotNetBase
 //  return $dropboxStatus;
 //}
 
-  public function putPhoto($localFile, $remoteFile, $dateTaken)
+  public function putPhoto($localFile, $remoteFile, $date_taken)
   {
     if(!file_exists($localFile))
     {
@@ -168,7 +168,7 @@ class FileSystemAppDotNetBase
     {
       list($localFile, $remoteFileArr) = each($file);
       $remoteFile = $remoteFileArr[0];
-      $dateTaken = $remoteFileArr[1];
+      $date_taken = $remoteFileArr[1];
       if(strpos($remoteFile, '/original/') !== false && file_exists($localFile))
       {
         if(!$this->putFileInDirectory($localFile, basename($remoteFile)))

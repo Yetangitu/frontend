@@ -1,7 +1,7 @@
 <?php
 $status = true;
 $sql = <<<SQL
-  ALTER TABLE `{$this->mySqlTablePrefix}photo` ADD `albums` TEXT NULL AFTER `pathBase` ;
+  ALTER TABLE `{$this->mySqlTablePrefix}photo` ADD `albums` TEXT NULL AFTER `path_base` ;
 SQL;
 $status = $status && mysql_2_0_6($sql);
 

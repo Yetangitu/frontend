@@ -39,7 +39,7 @@ class Token extends BaseModel
 
   private function whitelistParams($params)
   {
-    $matches = array('id' => 1,'type' => 1,'data' => 1,'dateExpires');
+    $matches = array('id' => 1,'type' => 1,'data' => 1,'date_expires');
     foreach($params as $key => $val)
     {
       if(!isset($matches[$key]))

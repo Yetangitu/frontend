@@ -11,10 +11,10 @@
     </p>
     <p>
       <i class="icon-info-sign"></i> 
-      <?php if($token['dateExpires'] == 0) { ?>
+      <?php if($token['date_expires'] == 0) { ?>
         This URL never expires.
       <?php } else { ?>
-        This URL expires in <?php echo intval(($token['dateExpires']-time())/86400); ?> days. <small>(<?php echo $this->utility->dateLong($token['dateExpires']); ?>)</small>
+        This URL expires in <?php echo intval(($token['date_expires']-time())/86400); ?> days. <small>(<?php echo $this->utility->dateLong($token['date_expires']); ?>)</small>
       <?php } ?>
     </p>
   </div>

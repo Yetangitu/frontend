@@ -351,9 +351,9 @@
             // since sort order for the API is static and onload changes the sort order for albums and gallery we need to mimic the controller behavior in JS
             if(_this.pageLocation.search.search('sortBy') === -1) {
               if(_this.pageLocation.pathname.search('/album-') === -1) // gallery
-                _this.pageLocation.search += concat + 'sortBy=dateUploaded,desc';
+                _this.pageLocation.search += concat + 'sortBy=date_uploaded,desc';
               else // album
-                _this.pageLocation.search += concat + 'sortBy=dateTaken,asc';
+                _this.pageLocation.search += concat + 'sortBy=date_taken,asc';
             }
 
             util.load(_this, async);

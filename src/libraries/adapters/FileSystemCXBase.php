@@ -111,7 +111,7 @@ class FileSystemCXBase
     */
   }
 
-  public function putPhoto($localFile, $remoteFile, $dateTaken)
+  public function putPhoto($localFile, $remoteFile, $date_taken)
   {
     if(!file_exists($localFile))
     {
@@ -121,7 +121,7 @@ class FileSystemCXBase
 
     if(strpos($remoteFile, '/original/') !== false)
     {
-      $directory = urlencode(date($this->directoryMask, $dateTaken));
+      $directory = urlencode(date($this->directoryMask, $date_taken));
       if(!$this->putFileInDirectory($directory, $localFile, basename($remoteFile)))
         return false;
     }
@@ -134,10 +134,10 @@ class FileSystemCXBase
     {
       list($localFile, $remoteFileArr) = each($file);
       $remoteFile = $remoteFileArr[0];
-      $dateTaken = $remoteFileArr[1];
+      $date_taken = $remoteFileArr[1];
       if(strpos($remoteFile, '/original/') !== false && file_exists($localFile))
       {
-        $directory = urlencode(date($this->directoryMask, $dateTaken));
+        $directory = urlencode(date($this->directoryMask, $date_taken));
         if(!$this->putFileInDirectory($directory, $localFile, basename($remoteFile)))
           return false;
       }

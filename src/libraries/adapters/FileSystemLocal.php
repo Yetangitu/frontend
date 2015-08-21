@@ -49,7 +49,7 @@ class FileSystemLocal implements FileSystemInterface
 
   public function downloadPhoto($photo)
   {
-    $fp = fopen($photo['pathOriginal'], 'r');
+    $fp = fopen($photo['path_original'], 'r');
     return $fp;
   }
 
@@ -109,7 +109,7 @@ class FileSystemLocal implements FileSystemInterface
     return false;
   }
 
-  public function putPhoto($localFile, $remoteFile, $dateTaken)
+  public function putPhoto($localFile, $remoteFile, $date_taken)
   {
     if(!file_exists($localFile))
     {
@@ -133,8 +133,8 @@ class FileSystemLocal implements FileSystemInterface
     {
       list($localFile, $remoteFileArr) = each($file);
       $remoteFile = $remoteFileArr[0];
-      $dateTaken = $remoteFileArr[1];
-      $res = $this->putPhoto($localFile, $remoteFile, $dateTaken);
+      $date_taken = $remoteFileArr[1];
+      $res = $this->putPhoto($localFile, $remoteFile, $date_taken);
       if(!$res)
         return false;
     }

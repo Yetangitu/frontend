@@ -14,7 +14,7 @@ interface DatabaseInterface
   // delete methods can delete or toggle status
   public function deleteAction($id);
   public function deleteActivities();
-  public function deleteActivitiesForElement($elementId, $types);
+  public function deleteActivitiesForElement($element_id, $types);
   public function deleteAlbum($id);
   public function deleteCredential($id);
   public function deleteGroup($id);
@@ -33,7 +33,7 @@ interface DatabaseInterface
   public function getAlbumElements($id);
   public function getAlbums($email, $limit = null, $offset = null);
   public function getCredential($id);
-  public function getCredentialByUserToken($userToken);
+  public function getCredentialByUserToken($user_token);
   public function getCredentials();
   public function getPhotoNextPrevious($id);
   public function getGroup($id = null);
@@ -58,9 +58,9 @@ interface DatabaseInterface
   public function executeScript($file, $database);
   // post methods update
   public function postAlbum($id, $params);
-  public function postAlbumAdd($albumId, $type, $elementIds);
+  public function postAlbumAdd($albumId, $type, $element_ids);
   public function postAlbumsIncrementer($tags, $value);
-  public function postAlbumRemove($albumId, $type, $elementIds);
+  public function postAlbumRemove($albumId, $type, $element_ids);
   public function postCredential($id, $params);
   public function postGroup($id, $params);
   public function postPhoto($id, $params);
@@ -72,7 +72,7 @@ interface DatabaseInterface
   // put methods create but do not update
   public function putGroup($id, $params);
   public function putAction($id, $params);
-  public function putActivity($id, $elementId, $params);
+  public function putActivity($id, $element_id, $params);
   public function putAlbum($id, $params);
   public function putCredential($id, $params);
   public function putPhoto($id, $params);

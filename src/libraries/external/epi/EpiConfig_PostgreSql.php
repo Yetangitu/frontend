@@ -1,11 +1,11 @@
 <?php
-class EpiConfig_MySql extends EpiConfig
+class EpiConfig_PostgreSql extends EpiConfig
 {
   private $db, $table;
   public function __construct($params)
   {
     parent::__construct();
-    $this->db = EpiDatabase::getInstance('mysql', $params['database'], $params['host'], $params['username'], $params['password']);
+    $this->db = EpiDatabase::getInstance('pgsql', $params['database'], $params['host'], $params['username'], $params['password']);
     $this->table = $params['table'];
     if(isset($params['cacheMask']) && $params['cacheMask'])
     {
@@ -29,7 +29,7 @@ class EpiConfig_MySql extends EpiConfig
     }
 
     $file = $this->getFilePath($file);
-    $res = $this->db->one("SELECT * FROM `{$this->table}` WHERE `id`=:file OR `alias_of`=:alias_of", array(':file' => $file, ':alias_of' => $file));
+    $res = $this->db->one("SELECT * FROM {$this->table} WHERE id=:file OR alias_of=:alias_of", array(':file' => $file, ':alias_of' => $file));
     return $res !== false;
   }
 
@@ -42,7 +42,7 @@ class EpiConfig_MySql extends EpiConfig
     }
 
     $file = $this->getFilePath($file);
-    $res = $this->db->one("SELECT * FROM `{$this->table}` WHERE `id`=:file OR `alias_of`=:alias_of", array(':file' => $file, ':alias_of' => $file));
+    $res = $this->db->one("SELECT * FROM {$this->table} WHERE id=:file OR alias_of=:alias_of", array(':file' => $file, ':alias_of' => $file));
     if($res === false)
       return null;
 
@@ -62,7 +62,7 @@ class EpiConfig_MySql extends EpiConfig
 
   public function search($term, $field = null)
   {
-    $res = $this->db->all($sql = "SELECT * FROM `{$this->table}` WHERE `value` LIKE :term", array(':term' => "%{$term}%"));
+    $res = $this->db->all($sql = "SELECT * FROM {$this->table} WHERE value LIKE :term", array(':term' => "%{$term}%"));
     foreach($res as $r)
     {
       $cfg = parse_ini_string($r['value'], true);
@@ -92,22 +92,22 @@ class EpiConfig_MySql extends EpiConfig
     if($isAlias !== null) // isAlias returns null if the record does not exist
     {
       $params = array(':value' => $string);
-      $sql = "UPDATE `{$this->table}` SET `value`=:value ";
+      $sql = "UPDATE {$this->table} SET value=:value ";
       if($alias_of !== null)
       {
-        $sql .= ", `alias_of`=:alias_of ";
+        $sql .= ", alias_of=:alias_of ";
         $params[':alias_of'] = $this->getFilePath($alias_of);
       }
       $params[':file'] = $file;
       if(!$isAlias)
-        $sql .= " WHERE `id`=:file";
+        $sql .= " WHERE id=:file";
       else
-        $sql .= " WHERE `alias_of`=:file";
+        $sql .= " WHERE alias_of=:file";
       $res = $this->db->execute($sql, $params);
     }
     else
     {
-      $res = $this->db->execute("INSERT INTO `{$this->table}` (`id`, `value`, `alias_of`) VALUES(:file, :value, :alias_of)", array(':file' => $file, ':value' => $string, ':alias_of' => $alias_of));
+      $res = $this->db->execute("INSERT INTO {$this->table} (id, value, alias_of) VALUES(:file, :value, :alias_of)", array(':file' => $file, ':value' => $string, ':alias_of' => $alias_of));
     }
 
     // delete the cached entry
@@ -138,7 +138,7 @@ class EpiConfig_MySql extends EpiConfig
         return $value;
     }
 
-    $res = $this->db->one("SELECT * FROM `{$this->table}` WHERE `id`=:file OR `alias_of`=:alias_of", array(':file' => $file, ':alias_of' => $file));
+    $res = $this->db->one("SELECT * FROM {$this->table} WHERE id=:file OR alias_of=:alias_of", array(':file' => $file, ':alias_of' => $file));
     if(!$res)
     {
       EpiException::raise(new EpiConfigException("Config file ({$file}) does not exist in db"));

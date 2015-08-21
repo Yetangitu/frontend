@@ -12,15 +12,15 @@
       </tr>
       <tr>
         <td>consumerSecret =</td>
-        <td><?php $this->utility->safe($clientSecret); ?></td>
+        <td><?php $this->utility->safe($client_secret); ?></td>
       </tr>
       <tr>
         <td>token =</td>
-        <td><?php $this->utility->safe($userToken); ?></td>
+        <td><?php $this->utility->safe($user_token); ?></td>
       </tr>
       <tr>
         <td>tokenSecret =</td>
-        <td><?php $this->utility->safe($userSecret); ?></td>
+        <td><?php $this->utility->safe($user_secret); ?></td>
       </tr>
       <tr>
         <td>Type</td>

@@ -76,7 +76,7 @@ class Group extends BaseModel
   private function getDefaultAttributes()
   {
     return array(
-      'appId' => $this->config->application->appId,
+      'app_id' => $this->config->application->app_id,
       'name' => '',
       'members' => array()
     );
@@ -84,7 +84,7 @@ class Group extends BaseModel
 
   private function validate($params, $create = true)
   {
-    if( ($create && (!isset($params['appId']) || empty($params['appId']))) || (!isset($params['name']) || empty($params['name'])) )
+    if( ($create && (!isset($params['app_id']) || empty($params['app_id']))) || (!isset($params['name']) || empty($params['name'])) )
       return false;
     return true;
   }

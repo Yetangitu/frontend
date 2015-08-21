@@ -513,7 +513,7 @@ class ApiPhotoController extends ApiBaseController
         $this->api->invoke(
           "/{$this->apiVersion}/activity/create.json", 
           EpiRoute::httpPost, 
-          array('_POST' => array('elementId' => $photoId, 'type' => 'photo-upload', 'data' => $photo, 'permission' => $permission))
+          array('_POST' => array('element_id' => $photoId, 'type' => 'photo-upload', 'data' => $photo, 'permission' => $permission))
         );
       }
 
@@ -613,7 +613,7 @@ class ApiPhotoController extends ApiBaseController
 
     $utilityObj = new Utility;
     $albumName = $albumResp['result']['name'];
-    $albumUrl = sprintf('%s://%s/photos/album-%s/token-%s/list??sortBy=dateUploaded,desc', $utilityObj->getProtocol(false), $utilityObj->getHost(false), $albumId, $token);
+    $albumUrl = sprintf('%s://%s/photos/album-%s/token-%s/list??sortBy=date_uploaded,desc', $utilityObj->getProtocol(false), $utilityObj->getHost(false), $albumId, $token);
     $tokenOwner = $tokenArr['actor'];
 
     $emailer = new Emailer;
@@ -687,7 +687,7 @@ class ApiPhotoController extends ApiBaseController
       $apiResp = $this->api->invoke("/{$this->apiVersion}/photo/{$id}/view.json", EpiRoute::httpGet, array('_GET' => array('returnSizes' => '100x100xCR', 'generate' => 'true')));
       $photo = $apiResp['result'];
 
-      $post = array('elementId' => $photoUpdatedId, 'type' => 'photo-update', 'data' => $photo, 'permission' => isset($params['permission']) ? $params['permission'] : 0);
+      $post = array('element_id' => $photoUpdatedId, 'type' => 'photo-update', 'data' => $photo, 'permission' => isset($params['permission']) ? $params['permission'] : 0);
       $this->api->invoke("/{$this->apiVersion}/activity/create.json", EpiRoute::httpPost, array('_POST' => $post));
 
       return $this->success("photo {$id} updated", $photo);
@@ -953,7 +953,7 @@ class ApiPhotoController extends ApiBaseController
 
     // This section enables in path parameters which are normally GET
     $pageSize = $this->config->pagination->photos;
-    $filters = array('sortBy' => 'dateTaken,desc');
+    $filters = array('sortBy' => 'date_taken,desc');
     if($filterOpts !== null)
     {
       $filterOpts = (array)explode('/', $filterOpts);

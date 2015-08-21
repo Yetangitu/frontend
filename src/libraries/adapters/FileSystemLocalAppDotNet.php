@@ -62,13 +62,13 @@ class FileSystemLocalAppDotNet extends FileSystemLocal implements FileSystemInte
     return parent::getPhoto($filename);
   }
 
-  public function putPhoto($localFile, $remoteFile, $dateTaken)
+  public function putPhoto($localFile, $remoteFile, $date_taken)
   {
     $parentStatus = true;
     if(strpos($remoteFile, '/original/') === false)
-      $parentStatus = parent::putPhoto($localFile, $remoteFile, $dateTaken);
+      $parentStatus = parent::putPhoto($localFile, $remoteFile, $date_taken);
 
-    return $this->adn->putPhoto($localFile, $remoteFile, $dateTaken) && $parentStatus;
+    return $this->adn->putPhoto($localFile, $remoteFile, $date_taken) && $parentStatus;
   }
 
   public function putPhotos($files)
@@ -78,7 +78,7 @@ class FileSystemLocalAppDotNet extends FileSystemLocal implements FileSystemInte
     {
       list($localFile, $remoteFileArr) = each($file);
       $remoteFile = $remoteFileArr[0];
-      $dateTaken = $remoteFileArr[1];
+      $date_taken = $remoteFileArr[1];
       if(strpos($remoteFile, '/original/') === false)
         $parentFiles[] = $file;
     }

@@ -75,7 +75,7 @@
     template : _.template($('#photo-detail-date-tmpl').html()),
     editable    : {
       '.date.edit' : {
-        name: 'dateTaken',
+        name: 'date_taken',
         title: 'Edit Photo Date',
         emptytext: 'Set a date',
         placement: 'top',
@@ -255,7 +255,7 @@
       // change the main image
       $(this.el).find('.photo img')
         .attr('src', this.model.get(this.largePath))
-      $title.html(TBX.format.sprintf('%s / Photo / %s / Trovebox', TBX.profiles.getOwnerUsername(), this.model.get('title') || this.model.get('filenameOriginal')));
+      $title.html(TBX.format.sprintf('%s / Photo / %s / Trovebox', TBX.profiles.getOwnerUsername(), this.model.get('title') || this.model.get('filename_original')));
 
       $(this.el).find('.photo .photo-view-modal-click')
         .attr('data-id', this.model.get('id'))

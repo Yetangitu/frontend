@@ -1,16 +1,16 @@
 <?php
 class CloudExperience
 {
-  private $accessToken, $baseUrl, $clientId, $clientSecret, $version;
+  private $accessToken, $baseUrl, $clientId, $client_secret, $version;
 
-  public function __construct($clientId, $clientSecret, $accessToken = null)
+  public function __construct($clientId, $client_secret, $accessToken = null)
   {
     $this->version = '1';
     $this->baseUrl = 'https://api.cx.com';
     $this->uploadUrl = 'https://data.cx.com';
 
     $this->clientId = $clientId;
-    $this->clientSecret = $clientSecret;
+    $this->client_secret = $client_secret;
     if($accessToken !== null)
       $this->setAccessToken($accessToken);
   }
@@ -36,7 +36,7 @@ class CloudExperience
       'redirect_uri' => $callback
     );
     $headers = array(
-      sprintf('Authorization: Basic %s', base64_encode(sprintf('%s:%s', $this->clientId, $this->clientSecret)))
+      sprintf('Authorization: Basic %s', base64_encode(sprintf('%s:%s', $this->clientId, $this->client_secret)))
     );
     return $this->call('POST', $url, $params, $headers);
   }

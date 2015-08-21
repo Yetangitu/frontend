@@ -15,7 +15,7 @@
 
 <?php if($page === 'photo-detail') { ?>
   <?php $photo = $this->plugin->getData('photo'); ?>
-  <?php $photoTitle = !empty($photo['name']) ? $photo['name'] : $photo['filenameOriginal']; ?>
+  <?php $photoTitle = !empty($photo['name']) ? $photo['name'] : $photo['filename_original']; ?>
   <?php $title = sprintf("%s / Photo / %s", $username, $photoTitle); ?>
 <?php } elseif($page === 'photos') { ?>
   <?php $album = $this->plugin->getData('album'); ?>

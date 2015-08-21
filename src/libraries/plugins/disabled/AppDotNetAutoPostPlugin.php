@@ -36,7 +36,7 @@ class AppDotNetAutoPostPlugin extends PluginBase
           'value' => array(
             'type' => 'photo',
             'version' => '1.0',
-            'url' => $photo['pathBase'],
+            'url' => $photo['path_base'],
             'width' => $photo['width'],
             'height' => $photo['height'],
             'provider_url' => 'https://trovebox.com',

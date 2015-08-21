@@ -13,18 +13,18 @@ SQL;
     `id` varchar(6) NOT NULL,
     `owner` varchar(127) NOT NULL,
     `actor` varchar(127) NOT NULL,
-    `appId` varchar(255) DEFAULT NULL,
-    `targetId` varchar(255) DEFAULT NULL,
-    `targetType` varchar(255) DEFAULT NULL,
+    `app_id` varchar(255) DEFAULT NULL,
+    `target_id` varchar(255) DEFAULT NULL,
+    `target_type` varchar(255) DEFAULT NULL,
     `email` varchar(255) DEFAULT NULL,
     `name` varchar(255) DEFAULT NULL,
     `avatar` varchar(255) DEFAULT NULL,
     `website` varchar(255) DEFAULT NULL,
-    `targetUrl` varchar(1000) DEFAULT NULL,
+    `target_url` varchar(1000) DEFAULT NULL,
     `permalink` varchar(1000) DEFAULT NULL,
     `type` varchar(255) DEFAULT NULL,
     `value` varchar(255) DEFAULT NULL,
-    `datePosted` varchar(255) DEFAULT NULL,
+    `date_posted` varchar(255) DEFAULT NULL,
     `status` int(11) DEFAULT NULL,
     PRIMARY KEY `owner` (`owner`,`id`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -36,12 +36,12 @@ SQL;
     `id` varchar(6) NOT NULL,
     `owner` varchar(127) NOT NULL,
     `actor` varchar(127) NOT NULL,
-    `appId` varchar(255) NOT NULL,
+    `app_id` varchar(255) NOT NULL,
     `type` varchar(32) NOT NULL,
-    `elementId` VARCHAR( 6 ) NOT NULL,
+    `element_id` VARCHAR( 6 ) NOT NULL,
     `data` text NOT NULL,
     `permission` BOOLEAN NOT NULL DEFAULT '0',
-    `dateCreated` int(10) unsigned NOT NULL,
+    `date_created` int(10) unsigned NOT NULL,
     PRIMARY KEY `owner` (`owner`,`id`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 SQL;
@@ -65,9 +65,9 @@ SQL;
     `name` varchar(255) NOT NULL,
     `groups` text,
     `extra` text,
-    `countPublic` int(10) unsigned NOT NULL DEFAULT '0',
-    `countPrivate` int(10) unsigned NOT NULL DEFAULT '0',
-    `dateLastPhotoAdded` int(11) NOT NULL DEFAULT '0',
+    `count_public` int(10) unsigned NOT NULL DEFAULT '0',
+    `count_private` int(10) unsigned NOT NULL DEFAULT '0',
+    `date_last_photo_added` int(11) NOT NULL DEFAULT '0',
     PRIMARY KEY `owner` (`owner`,`id`)
   ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 SQL;
@@ -87,7 +87,7 @@ SQL;
   $sql = <<<SQL
   CREATE TABLE IF NOT EXISTS `{$this->mySqlTablePrefix}config` (
     `id` varchar(255) NOT NULL DEFAULT '',
-    `aliasOf` varchar(255) DEFAULT NULL,
+    `alias_of` varchar(255) DEFAULT NULL,
     `value` text NOT NULL,
     PRIMARY KEY (`id`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -101,14 +101,14 @@ SQL;
     `actor` varchar(127) NOT NULL,
     `name` varchar(255) DEFAULT NULL,
     `image` text,
-    `clientSecret` varchar(255) DEFAULT NULL,
-    `userToken` varchar(255) DEFAULT NULL,
-    `userSecret` varchar(255) DEFAULT NULL,
+    `client_secret` varchar(255) DEFAULT NULL,
+    `user_token` varchar(255) DEFAULT NULL,
+    `user_secret` varchar(255) DEFAULT NULL,
     `permissions` varchar(255) DEFAULT NULL,
     `verifier` varchar(255) DEFAULT NULL,
     `type` varchar(100) NOT NULL,
     `status` int(11) DEFAULT '0',
-    `dateCreated` INT(11) DEFAULT NULL,
+    `date_created` INT(11) DEFAULT NULL,
     PRIMARY KEY `owner` (`owner`,`id`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 SQL;
@@ -165,7 +165,7 @@ SQL;
     `id` varchar(6) NOT NULL,
     `owner` varchar(127) NOT NULL,
     `actor` varchar(127) NOT NULL,
-    `appId` varchar(255) DEFAULT NULL,
+    `app_id` varchar(255) DEFAULT NULL,
     `name` varchar(255) DEFAULT NULL,
     `permission` tinyint(4) NOT NULL COMMENT 'Bitmask of permissions',
     UNIQUE KEY `id` (`id`,`owner`)
@@ -191,7 +191,7 @@ SQL;
     `id` varchar(6) NOT NULL,
     `owner` varchar(127) NOT NULL,
     `actor` varchar(127) NOT NULL,
-    `appId` varchar(255) NOT NULL,
+    `app_id` varchar(255) NOT NULL,
     `host` varchar(255) DEFAULT NULL,
     `title` varchar(255) DEFAULT NULL,
     `description` text,
@@ -209,18 +209,18 @@ SQL;
     `status` int(11) DEFAULT NULL,
     `permission` int(11) DEFAULT NULL,
     `license` varchar(255) DEFAULT NULL,
-    `dateTaken` int(11) DEFAULT NULL,
-    `dateTakenDay` int(11) DEFAULT NULL,
-    `dateTakenMonth` int(11) DEFAULT NULL,
-    `dateTakenYear` int(11) DEFAULT NULL,
-    `dateUploaded` int(11) DEFAULT NULL,
-    `dateUploadedDay` int(11) DEFAULT NULL,
-    `dateUploadedMonth` int(11) DEFAULT NULL,
-    `dateUploadedYear` int(11) DEFAULT NULL,
-    `dateSortByDay` varchar(14) NOT NULL,
-    `filenameOriginal` varchar(255) DEFAULT NULL,
-    `pathOriginal` varchar(1000) DEFAULT NULL,
-    `pathBase` varchar(1000) DEFAULT NULL,
+    `date_taken` int(11) DEFAULT NULL,
+    `date_taken_day` int(11) DEFAULT NULL,
+    `date_taken_month` int(11) DEFAULT NULL,
+    `date_taken_year` int(11) DEFAULT NULL,
+    `date_uploaded` int(11) DEFAULT NULL,
+    `date_uploaded_day` int(11) DEFAULT NULL,
+    `date_uploaded_month` int(11) DEFAULT NULL,
+    `date_uploaded_year` int(11) DEFAULT NULL,
+    `date_sort_by_day` varchar(14) NOT NULL,
+    `filename_original` varchar(255) DEFAULT NULL,
+    `path_original` varchar(1000) DEFAULT NULL,
+    `path_base` varchar(1000) DEFAULT NULL,
     `albums` text,
     `groups` text,
     `tags` text,
@@ -246,7 +246,7 @@ SQL;
   CREATE TABLE IF NOT EXISTS `{$this->mySqlTablePrefix}relationship` (
     `actor` varchar(127) NOT NULL,
     `follows` varchar(127) NOT NULL,
-    `dateCreated` datetime NOT NULL,
+    `date_created` datetime NOT NULL,
     PRIMARY KEY (`actor`,`follows`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 SQL;
@@ -258,7 +258,7 @@ SQL;
     `owner` varchar(255) NOT NULL,
     `actor` varchar(127) NOT NULL,
     `resource` text NOT NULL,
-    `dateCreated` int(11) NOT NULL,
+    `date_created` int(11) NOT NULL,
     PRIMARY KEY (`owner`,`id`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 SQL;
@@ -271,7 +271,7 @@ SQL;
     `actor` VARCHAR( 127 ) NOT NULL ,
     `type` ENUM( 'album', 'photo', 'photos', 'video' ) NOT NULL ,
     `data` VARCHAR( 255 ) NOT NULL ,
-    `dateExpires` INT UNSIGNED NOT NULL ,
+    `date_expires` INT UNSIGNED NOT NULL ,
     PRIMARY KEY ( `owner` , `id` ),
     KEY `owner` (`owner`,`type`,`data`)
   ) ENGINE = InnoDB;
@@ -283,8 +283,8 @@ SQL;
     `id` varchar(127) NOT NULL,
     `owner` varchar(127) NOT NULL,
     `actor` varchar(127) NOT NULL,
-    `countPublic` int(11) NOT NULL DEFAULT '0',
-    `countPrivate` int(11) NOT NULL DEFAULT '0',
+    `count_public` int(11) NOT NULL DEFAULT '0',
+    `count_private` int(11) NOT NULL DEFAULT '0',
     `extra` text NOT NULL,
     UNIQUE KEY `owner` (`owner`,`id`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -307,7 +307,7 @@ SQL;
     `id` varchar(6) NOT NULL,
     `owner` varchar(127) NOT NULL,
     `actor` varchar(127) NOT NULL,
-    `appId` varchar(255) DEFAULT NULL,
+    `app_id` varchar(255) DEFAULT NULL,
     `callback` varchar(1000) DEFAULT NULL,
     `topic` varchar(255) DEFAULT NULL,
     UNIQUE KEY `owner` (`owner`,`id`)
@@ -320,9 +320,9 @@ SQL;
   CREATE TRIGGER update_album_counts_on_delete AFTER DELETE ON {$this->mySqlTablePrefix}elementAlbum
   FOR EACH ROW
   BEGIN
-    SET @countPublic=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementAlbum AS ea ON p.id = ea.element WHERE ea.owner=OLD.owner AND ea.album=OLD.album AND p.owner=OLD.owner AND p.permission='1');
-    SET @countPrivate=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementAlbum AS ea ON p.id = ea.element WHERE ea.owner=OLD.owner AND ea.album=OLD.album AND p.owner=OLD.owner);
-    UPDATE {$this->mySqlTablePrefix}album SET countPublic=@countPublic, countPrivate=@countPrivate WHERE owner=OLD.owner AND id=OLD.album;
+    SET @count_public=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementAlbum AS ea ON p.id = ea.element WHERE ea.owner=OLD.owner AND ea.album=OLD.album AND p.owner=OLD.owner AND p.permission='1');
+    SET @count_private=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementAlbum AS ea ON p.id = ea.element WHERE ea.owner=OLD.owner AND ea.album=OLD.album AND p.owner=OLD.owner);
+    UPDATE {$this->mySqlTablePrefix}album SET count_public=@count_public, count_private=@count_private WHERE owner=OLD.owner AND id=OLD.album;
   END
 SQL;
   mysql_base($sql);
@@ -331,9 +331,9 @@ SQL;
   CREATE TRIGGER update_album_counts_on_insert AFTER INSERT ON {$this->mySqlTablePrefix}elementAlbum
   FOR EACH ROW
   BEGIN
-    SET @countPublic=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementAlbum AS ea ON p.id = ea.element WHERE ea.owner=NEW.owner AND ea.album=NEW.album AND p.owner=NEW.owner AND p.permission='1');
-    SET @countPrivate=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementAlbum AS ea ON p.id = ea.element WHERE ea.owner=NEW.owner AND ea.album=NEW.album AND p.owner=NEW.owner);
-    UPDATE {$this->mySqlTablePrefix}album SET countPublic=@countPublic, countPrivate=@countPrivate WHERE owner=NEW.owner AND id=NEW.album;
+    SET @count_public=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementAlbum AS ea ON p.id = ea.element WHERE ea.owner=NEW.owner AND ea.album=NEW.album AND p.owner=NEW.owner AND p.permission='1');
+    SET @count_private=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementAlbum AS ea ON p.id = ea.element WHERE ea.owner=NEW.owner AND ea.album=NEW.album AND p.owner=NEW.owner);
+    UPDATE {$this->mySqlTablePrefix}album SET count_public=@count_public, count_private=@count_private WHERE owner=NEW.owner AND id=NEW.album;
   END
 SQL;
   mysql_base($sql);
@@ -342,9 +342,9 @@ SQL;
   CREATE TRIGGER update_tag_counts_on_insert AFTER INSERT ON {$this->mySqlTablePrefix}elementTag
   FOR EACH ROW
   BEGIN
-    SET @countPublic=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementTag AS et ON p.id = et.element WHERE et.owner=NEW.owner AND et.tag=NEW.tag AND p.owner=NEW.owner AND p.permission='1');
-    SET @countPrivate=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementTag AS et ON p.id = et.element WHERE et.owner=NEW.owner AND et.tag=NEW.tag AND p.owner=NEW.owner);
-  UPDATE {$this->mySqlTablePrefix}tag SET countPublic=@countPublic, countPrivate=@countPrivate WHERE owner=NEW.owner AND id=NEW.tag;
+    SET @count_public=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementTag AS et ON p.id = et.element WHERE et.owner=NEW.owner AND et.tag=NEW.tag AND p.owner=NEW.owner AND p.permission='1');
+    SET @count_private=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementTag AS et ON p.id = et.element WHERE et.owner=NEW.owner AND et.tag=NEW.tag AND p.owner=NEW.owner);
+  UPDATE {$this->mySqlTablePrefix}tag SET count_public=@count_public, count_private=@count_private WHERE owner=NEW.owner AND id=NEW.tag;
   END
 SQL;
   mysql_base($sql);
@@ -353,9 +353,9 @@ SQL;
   CREATE TRIGGER update_tag_counts_on_delete AFTER DELETE ON {$this->mySqlTablePrefix}elementTag
   FOR EACH ROW
   BEGIN
-    SET @countPublic=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementTag AS et ON p.id = et.element WHERE et.owner=OLD.owner AND et.tag=OLD.tag AND p.owner=OLD.owner AND p.permission='1');
-    SET @countPrivate=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementTag AS et ON p.id = et.element WHERE et.owner=OLD.owner AND et.tag=OLD.tag AND p.owner=OLD.owner);
-    UPDATE {$this->mySqlTablePrefix}tag SET countPublic=@countPublic, countPrivate=@countPrivate WHERE owner=OLD.owner AND id=OLD.tag;
+    SET @count_public=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementTag AS et ON p.id = et.element WHERE et.owner=OLD.owner AND et.tag=OLD.tag AND p.owner=OLD.owner AND p.permission='1');
+    SET @count_private=(SELECT COUNT(*) FROM {$this->mySqlTablePrefix}photo AS p INNER JOIN {$this->mySqlTablePrefix}elementTag AS et ON p.id = et.element WHERE et.owner=OLD.owner AND et.tag=OLD.tag AND p.owner=OLD.owner);
+    UPDATE {$this->mySqlTablePrefix}tag SET count_public=@count_public, count_private=@count_private WHERE owner=OLD.owner AND id=OLD.tag;
   END
 SQL;
   mysql_base($sql);

@@ -4,7 +4,7 @@ $status = true;
 
 /* add timestamp to the table credentials */
 $sql = <<<SQL
-	ALTER TABLE `{$this->mySqlTablePrefix}credential` ADD `dateCreated` INT(11) DEFAULT NULL
+	ALTER TABLE `{$this->mySqlTablePrefix}credential` ADD `date_created` INT(11) DEFAULT NULL
 SQL;
 $status = $status && mysql_3_0_5($sql);
 

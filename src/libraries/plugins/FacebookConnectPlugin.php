@@ -26,7 +26,7 @@ class FacebookConnectPlugin extends PluginBase
   <script>
     window.fbAsyncInit = function() {
       FB.init({
-        appId      : '{$conf->id}', // App ID
+        app_id      : '{$conf->id}', // App ID
         status     : true, // check login status
         cookie     : true, // enable cookies to allow the server to access the session
         oauth      : true, // enable OAuth 2.0
@@ -40,7 +40,7 @@ class FacebookConnectPlugin extends PluginBase
       var js, fjs = d.getElementsByTagName(s)[0];
       if (d.getElementById(id)) return;
       js = d.createElement(s); js.id = id;
-      js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId={$conf->id}";
+      js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&app_id={$conf->id}";
       fjs.parentNode.insertBefore(js, fjs);
     }(document, 'script', 'facebook-jssdk'));
   </script>

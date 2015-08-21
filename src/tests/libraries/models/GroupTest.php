@@ -4,7 +4,7 @@ class GroupTest extends PHPUnit_Framework_TestCase
   public function setUp()
   {
     $this->group = new Group(array('user' => new FauxObject));
-    $this->group->config = json_decode(json_encode(array('application' => array('appId' => 'foo'), 'user' => array('email' => 'bar'))));
+    $this->group->config = json_decode(json_encode(array('application' => array('app_id' => 'foo'), 'user' => array('email' => 'bar'))));
   }
 
   public function testCreateNotValidated()
@@ -12,7 +12,7 @@ class GroupTest extends PHPUnit_Framework_TestCase
     $res = $this->group->create(array());
     $this->assertFalse($res, 'An empty array should not pass validation and return FALSE');
 
-    $res = $this->group->create(array('appId' => 'foo'));
+    $res = $this->group->create(array('app_id' => 'foo'));
     $this->assertFalse($res, 'With "name" missing should not pass validation and return FALSE');
   }
 
@@ -24,7 +24,7 @@ class GroupTest extends PHPUnit_Framework_TestCase
       ->will($this->returnValue(false));
     $this->group->inject('user', $user);
 
-    $res = $this->group->create(array('appId' => 'foo', 'name' => 'bar'));
+    $res = $this->group->create(array('app_id' => 'foo', 'name' => 'bar'));
     $this->assertFalse($res, 'When the next id cannot be retrieved it should return FALSE');
   }
 
@@ -41,7 +41,7 @@ class GroupTest extends PHPUnit_Framework_TestCase
     $this->group->inject('user', $user);
     $this->group->inject('db', $db);
 
-    $res = $this->group->create(array('appId' => 'foo', 'name' => 'bar'));
+    $res = $this->group->create(array('app_id' => 'foo', 'name' => 'bar'));
     $this->assertFalse($res, 'When posting to db fails it should return FALSE');
   }
 
@@ -58,7 +58,7 @@ class GroupTest extends PHPUnit_Framework_TestCase
     $this->group->inject('user', $user);
     $this->group->inject('db', $db);
 
-    $res = $this->group->create(array('appId' => 'foo', 'name' => 'bar'));
+    $res = $this->group->create(array('app_id' => 'foo', 'name' => 'bar'));
     $this->assertEquals('abc', $res, 'A successful creation should return the id');
   }
 
@@ -141,7 +141,7 @@ class GroupTest extends PHPUnit_Framework_TestCase
     $res = $this->group->update('a', array());
     $this->assertFalse($res, 'An empty array should not pass validation and return FALSE');
 
-    $res = $this->group->update('a', array('appId' => 'foo'));
+    $res = $this->group->update('a', array('app_id' => 'foo'));
     $this->assertFalse($res, 'With "name" missing should not pass validation and return FALSE');
   }
 

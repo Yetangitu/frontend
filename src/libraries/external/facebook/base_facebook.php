@@ -158,7 +158,7 @@ abstract class BaseFacebook
    *
    * @var string
    */
-  protected $appId;
+  protected $app_id;
 
   /**
    * The Application API Secret.
@@ -203,14 +203,14 @@ abstract class BaseFacebook
    * Initialize a Facebook Application.
    *
    * The configuration:
-   * - appId: the application ID
+   * - app_id: the application ID
    * - secret: the application secret
    * - fileUpload: (optional) boolean indicating if file uploads are enabled
    *
    * @param array $config The application configuration
    */
   public function __construct($config) {
-    $this->setAppId($config['appId']);
+    $this->setAppId($config['app_id']);
     $this->setApiSecret($config['secret']);
     if (isset($config['fileUpload'])) {
       $this->setFileUploadSupport($config['fileUpload']);
@@ -225,11 +225,11 @@ abstract class BaseFacebook
   /**
    * Set the Application ID.
    *
-   * @param string $appId The Application ID
+   * @param string $app_id The Application ID
    * @return BaseFacebook
    */
-  public function setAppId($appId) {
-    $this->appId = $appId;
+  public function setAppId($app_id) {
+    $this->app_id = $app_id;
     return $this;
   }
 
@@ -239,7 +239,7 @@ abstract class BaseFacebook
    * @return string the Application ID
    */
   public function getAppId() {
-    return $this->appId;
+    return $this->app_id;
   }
 
   /**
@@ -621,7 +621,7 @@ abstract class BaseFacebook
    *                public information about users and applications.
    */
   protected function getApplicationAccessToken() {
-    return $this->appId.'|'.$this->apiSecret;
+    return $this->app_id.'|'.$this->apiSecret;
   }
 
   /**

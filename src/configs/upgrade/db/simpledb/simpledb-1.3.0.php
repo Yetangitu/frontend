@@ -32,7 +32,7 @@ while(true)
 }
 foreach($tags as $tag => $counts)
 {
-  $params = array('countPrivate' => $counts['private'], 'countPublic' => $counts['public']);
+  $params = array('count_private' => $counts['private'], 'count_public' => $counts['public']);
   $this->postTag($tag, $params);
 }
 $user = $this->getUser(1);

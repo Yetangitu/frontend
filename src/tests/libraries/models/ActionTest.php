@@ -5,7 +5,7 @@ class ActionTest extends PHPUnit_Framework_TestCase
   {
     // to test the write methods
     $this->action = new Action(array('user'=>new stdClass));
-    $this->action->config = json_decode(json_encode(array('application' => array('appId' => 'foo'), 'user' => array('email' => 'bar'))));
+    $this->action->config = json_decode(json_encode(array('application' => array('app_id' => 'foo'), 'user' => array('email' => 'bar'))));
   }
 
   public function testCreate()
@@ -24,9 +24,9 @@ class ActionTest extends PHPUnit_Framework_TestCase
 
     $params = array('foo' => 'bar');
     $res = $this->action->create($params);
-    $this->assertFalse($res, 'Action::create requires type and targetType');
+    $this->assertFalse($res, 'Action::create requires type and target_type');
 
-    $params['type'] = $params['targetType'] = 'foo';
+    $params['type'] = $params['target_type'] = 'foo';
     $res = $this->action->create($params);
     $this->assertEquals('a', $res, 'Action::create should return id on success');
   }

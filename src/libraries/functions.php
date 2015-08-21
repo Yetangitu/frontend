@@ -67,7 +67,7 @@ function getCredential()
 /**
   * The public interface for instantiating a database obect.
   * This returns the appropriate type of object by reading the config.
-  * Accepts a set of params that must include a type and targetType
+  * Accepts a set of params that must include a type and target_type
   *
   * @param string $type Optional type parameter which defines the type of database.
   * @return object A database object that implements DatabaseInterface
@@ -91,6 +91,9 @@ function getDb(/*$type*/)
     case 'MySql':
       $database = new DatabaseMySql();
       break;
+    case 'PostgreSql':
+      $database = new DatabasePostgreSql();
+      break;
   }
 
   if($database)
@@ -102,7 +105,7 @@ function getDb(/*$type*/)
 /**
   * The public interface for instantiating a file system obect.
   * This returns the appropriate type of object by reading the config.
-  * Accepts a set of params that must include a type and targetType
+  * Accepts a set of params that must include a type and target_type
   *
   * @param string $type Optional type parameter which defines the type of file system.
   * @param boolean $force Force the return of a new FS object without "caching"
@@ -172,7 +175,7 @@ function getFs(/*$type, $useCache*/)
 /**
   * The public interface for instantiating an image obect.
   * This returns the appropriate type of object by reading the config.
-  * Accepts a set of params that must include a type and targetType
+  * Accepts a set of params that must include a type and target_type
   *
   * @return object An image object that implements ImageInterface
   */
@@ -195,6 +198,9 @@ function getImage()
         break;
       case 'GD':
         return new ImageGD();
+        break;
+      case 'PostgreSql':
+        $database = new DatabasePostgreSql();
         break;
     }
   }
@@ -231,7 +237,7 @@ function getLogin($provider)
 /**
   * The public interface for instantiating an maps object.
   * This returns the appropriate type of object by reading the config.
-  * Accepts a set of params that must include a type and targetType
+  * Accepts a set of params that must include a type and target_type
   *
   * @return object A maps object that implements MapsInterface
   */

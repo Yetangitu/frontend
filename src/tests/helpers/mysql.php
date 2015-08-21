@@ -37,7 +37,7 @@ class MySqlMockHelper
       'actor' => 'actor@actor.com',
       'type' => 'album',
       'data' => 'data',
-      'dateExpires' => time()+100,
+      'date_expires' => time()+100,
       'groups' => 'one,two,three'
     ), $override);
 

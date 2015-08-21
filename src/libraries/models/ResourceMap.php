@@ -21,7 +21,7 @@ class ResourceMap extends BaseModel
     if(!$id)
       return false;
 
-    $data = array('uri' => $params['uri'], 'method' => 'GET', 'dateCreated' => time());
+    $data = array('uri' => $params['uri'], 'method' => 'GET', 'date_created' => time());
     if(isset($params['method']))
       $data['method'] = $params['method'];
 

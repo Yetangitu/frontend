@@ -16,7 +16,7 @@ class ApiManageController extends ApiBaseController
     $configArray = parse_ini_string($configString, true);
 
     // set defaults since checkbox values are not passed if unchecked
-    $post = array_merge(array('enableBetaFeatures' => 0, 'allowDuplicate' => 0, 'downloadOriginal' => 0, 'hideFromSearchEngines' => 0, 'decreaseLocationPrecision' => 0), $_POST);
+    $post = array_merge(array('useGravatar' => 0, 'enableBetaFeatures' => 0, 'allowDuplicate' => 0, 'downloadOriginal' => 0, 'hideFromSearchEngines' => 0, 'decreaseLocationPrecision' => 0), $_POST);
     foreach($post as $key => $value)
     {
       switch($key)
@@ -38,6 +38,9 @@ class ApiManageController extends ApiBaseController
           break;
         case 'decreaseLocationPrecision':
           $configArray['site']['decreaseLocationPrecision'] = (string)intval($value);
+          break;
+        case 'useGravatar':
+          $configArray['site']['useGravatar'] = (string)intval($value);
           break;
         case 'fileSystem':
           // validate this is an existing file system

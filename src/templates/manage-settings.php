@@ -44,6 +44,12 @@
           Decrease the accuracy when displaying my photos on a map for others
         </label>
       </div>
+      <div class="controls">
+        <label class="checkbox inline">
+          <input type="checkbox" name="useGravatar" value="1" <?php if($useGravatar) { ?>checked="checked"<?php } ?>>
+          Use <a href="https://gravatar.com/" target=_blank>Gravatar</a> to fetch avatars 
+        </label>
+      </div>
     </div>
 
     <div class="span6">
@@ -91,8 +97,8 @@
           <tr>
             <td>
               <?php $this->utility->safe($credential['name']); ?>
-              <?php if(!empty($credential['dateCreated'])) { ?>
-                <small><em class="credential-date">(<?php $this->utility->safe(ucwords($credential['type'])); ?> token created on <?php $this->utility->dateLong($credential['dateCreated']); ?>)</em></small>
+              <?php if(!empty($credential['date_created'])) { ?>
+                <small><em class="credential-date">(<?php $this->utility->safe(ucwords($credential['type'])); ?> token created on <?php $this->utility->dateLong($credential['date_created']); ?>)</em></small>
               <?php } ?>
             </td>
             <td>
@@ -165,7 +171,7 @@
           <tr>
             <td>
               Photo <?php $this->utility->safe($photo['data']); ?>
-              <small><em>(<?php if(empty($photo['dateExpires'])) { ?>Sharing token never expires<?php } else { ?>Sharing token expires on <?php $this->utility->dateLong($photo['dateExpires']); ?><?php } ?>)</em></small>
+              <small><em>(<?php if(empty($photo['date_expires'])) { ?>Sharing token never expires<?php } else { ?>Sharing token expires on <?php $this->utility->dateLong($photo['date_expires']); ?><?php } ?>)</em></small>
             </td>
             <td>
               <div class="pull-right">
@@ -191,7 +197,7 @@
           <tr>
             <td>
               Album
-              <small><em>(<?php if(empty($album['dateExpires'])) { ?>Sharing token never expires<?php } else { ?>Sharing token expires on <?php $this->utility->dateLong($album['dateExpires']); ?><?php } ?>)</em></small>
+              <small><em>(<?php if(empty($album['date_expires'])) { ?>Sharing token never expires<?php } else { ?>Sharing token expires on <?php $this->utility->dateLong($album['date_expires']); ?><?php } ?>)</em></small>
             </td>
             <td>
               <div class="pull-right">

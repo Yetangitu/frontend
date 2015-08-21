@@ -176,7 +176,7 @@ class FileSystemLocalTest extends PHPUnit_Framework_TestCase
     );
     $res = $this->fs->putPhotos($files);
     $this->assertTrue($res, 'Putting multiple photos failed');
-    $this->assertTrue(vfsStreamWrapper::getRoot()->hasChild(sprintf('%s/%s', date('Ym', strtotime('1/1/2000')), $copiedFileName)), 'File does not exist at specified dateTaken');
+    $this->assertTrue(vfsStreamWrapper::getRoot()->hasChild(sprintf('%s/%s', date('Ym', strtotime('1/1/2000')), $copiedFileName)), 'File does not exist at specified date_taken');
   }
 
 

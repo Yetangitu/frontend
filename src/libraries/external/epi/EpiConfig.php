@@ -3,6 +3,7 @@ class EpiConfig
 {
   const FILE = 'EpiConfig_File';
   const MYSQL = 'EpiConfig_MySql';
+  const PGSQL = 'EpiConfig_PostgreSql';
   private static $employ;
   protected static $instances;
   protected $config, $cacheObj, $cacheMask;
@@ -118,6 +119,8 @@ function getConfig()
     return EpiConfig::getInstance(EpiConfig::FILE, $employ);
   elseif(class_exists(EpiConfig::MYSQL))
     return EpiConfig::getInstance(EpiConfig::MYSQL, $employ);
+  elseif(class_exists(EpiConfig::PGSQL))
+    return EpiConfig::getInstance(EpiConfig::PGSQL, $employ);
   else
     EpiException::raise(new EpiConfigTypeDoesNotExistException('Could not determine which cache handler to load', 404));
 }

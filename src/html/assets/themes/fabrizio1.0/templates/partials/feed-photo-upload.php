@@ -1,6 +1,6 @@
 <li class="type-<?php $this->utility->safe($activity[0]['type']); ?>">
   <div class="activity-meta">
-    <span class="activity-time"><?php $this->utility->timeAsText($activity[0]['data']['dateUploaded']); ?></span>
+    <span class="activity-time"><?php $this->utility->timeAsText($activity[0]['data']['date_uploaded']); ?></span>
     <i class="activity-type icon-upload"></i>
   </div>
   <?php if(stristr($avatar = $this->user->getAvatarFromEmail(50, $activity[0]['owner']), 'gravatar.com') === false) { ?>

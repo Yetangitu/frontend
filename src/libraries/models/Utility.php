@@ -78,6 +78,7 @@ class Utility
     $key = md5(sprintf('%s~%s', $salt, $secret));
 
     $encryptedString = mcrypt_encrypt(MCRYPT_RIJNDAEL_256, $key, $string, MCRYPT_MODE_ECB, $iv);
+
     return base64_encode($encryptedString);
   }
 

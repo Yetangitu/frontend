@@ -212,7 +212,7 @@ var Gallery = (function($) {
 	 * to the image. 
 	 */
 	var createImageElement = function(parent, item) {
-    var d = new Date(item.dateTaken*1000);
+    var d = new Date(item.date_taken*1000);
     var pageObject = TBX.init.pages.photos;
     var qsRe = /(page|returnSizes)=[^&?]+\&?/g;
     var qs = pageObject.pageLocation.search.replace(qsRe, '');
@@ -327,7 +327,7 @@ var Gallery = (function($) {
 		});
 
     // insert calendar icon
-    var d = new Date(item.dateTakenYear, item.dateTakenMonth - 1, item.dateTakenDay);
+    var d = new Date(item.date_taken_year, item.date_taken_month - 1, item.date_taken_day);
     currentDate = d.getYear()+'-'+d.getMonth()+'-'+d.getDay();
     imageContainer.append(dateSeparator(model, d));
     lastDate = currentDate;

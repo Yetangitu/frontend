@@ -41,7 +41,7 @@
         <?php if(isset($_GET['edit'])) { ?><a class="btn" href="/">Cancel</a><?php } ?>
         <button class="btn btn-brand" type="submit">Continue to Step 2</button>
       </div>
-      <input type="hidden" name="appId" id="appId" <?php if(isset($appId)) { ?>value="<?php $this->utility->safe($appId); ?>"<?php } ?>>
+      <input type="hidden" name="app_id" id="app_id" <?php if(isset($app_id)) { ?>value="<?php $this->utility->safe($app_id); ?>"<?php } ?>>
     </form>
   </div>
   <div id="setup-step-2"<?php echo ($step != 2) ? ' class="hidden"' : ''?>>
@@ -56,7 +56,14 @@
         </select>
       <?php } ?>
 
-      <input type="hidden" name="database" value="MySql">
+      <label for="database">Select database</label>
+      <?php if(isset($databases)) { ?>
+        <select name="database" id="database">
+          <?php foreach($databases as $key => $val) { ?>
+            <option value="<?php echo $key; ?>"<?php echo ($database == $key) ? ' selected="selected"' : '' ?>><?php echo $val; ?></option>
+          <?php } ?>
+        </select>
+      <?php } ?>
 
       <label for="fileSystem">Select File System</label>
       <select name="fileSystem">
@@ -93,7 +100,10 @@
           <?php } ?>
         <?php } ?>
       <?php } ?>
-      <h3>Enter your MySQL credentials <!--<em>(<a href="">what's this?</a>)</em>--></h3>
+
+      <?php if(isset($usesMySql) && $usesMySql) { ?>
+
+      <h3>Enter your MySql credentials <!--<em>(<a href="">what's this?</a>)</em>--></h3>
 
       <label for="mySqlHost">MySQL Host <em>(port is optional)</em></label>
       <input type="text" name="mySqlHost" id="mySqlHost" placeholder="Your MySql host (i.e. 127.0.0.1:3306)" size="50" autocomplete="off" data-validation="required" value="<?php echo $mySqlHost; ?>">
@@ -110,9 +120,32 @@
       <label for="mySqlTablePrefix">Table prefix <em>(optional)</em></label>
       <input type="text" name="mySqlTablePrefix" placeholder="A prefix for all OpenPhoto tables" id="mySqlTablePrefix" size="50" autocomplete="off" value="<?php echo $mySqlTablePrefix; ?>">
 
+      <?php } ?>
+
+      <?php if(isset($usesPostgreSql) && $usesPostgreSql) { ?>
+
+      <h3>Enter your PostgreSQL credentials <!--<em>(<a href="">what's this?</a>)</em>--></h3>
+
+      <label for="postgreSqlHost">PostgreSQL Host <em>(port is optional)</em></label>
+      <input type="text" name="postgreSqlHost" id="postgreSqlHost" placeholder="Your PostgreSql host (i.e. 127.0.0.1:3306)" size="50" autocomplete="off" data-validation="required" value="<?php echo $postgreSqlHost; ?>">
+
+      <label for="postgreSqlUser">PostgreSQL Username</label>
+      <input type="text" name="postgreSqlUser" id="postgreSqlUser" placeholder="Your PostgreSql username" size="50" autocomplete="off" data-validation="required" value="<?php echo $postgreSqlUser; ?>">
+
+      <label for="postgreSqlPassword">PostgreSQL Password</label>
+      <input type="password" name="postgreSqlPassword" id="postgreSqlPassword" placeholder="Your PostgreSql password" size="50" autocomplete="off" value="<?php echo $postgreSqlPassword; ?>">
+
+      <label for="postgreSqlDb">PostgreSQL Database <em>(make sure this database already exists)</em></label>
+      <input type="text" name="postgreSqlDb" placeholder="Name of your PostgreSql database" id="postgreSqlDb" size="50" autocomplete="off" data-validation="required" value="<?php echo $postgreSqlDb; ?>">
+
+      <label for="postgreSqlTablePrefix">Table prefix <em>(optional)</em></label>
+      <input type="text" name="postgreSqlTablePrefix" placeholder="A prefix for all OpenPhoto tables" id="postgreSqlTablePrefix" size="50" autocomplete="off" value="<?php echo $postgreSqlTablePrefix; ?>">
+
+      <?php } ?>
+
       <?php if((isset($usesLocalFs) && !empty($usesLocalFs))) { ?>
         <h3>Enter your local file system credentials <!--<em>(<a href="">what's this?</a>)</em>--></h3>
-        <label for="fsRoot">File system root <em>(Must be writable by Apache user)</em></label>
+        <label for="fsRoot">File system root <em>(Must be writable by web server user)</em></label>
         <input type="text" name="fsRoot" id="fsRoot" size="50" placeholder="/home/username/openphoto/src/html/photos (full path to writable directory)" data-validation="required" value="<?php echo $fsRoot; ?>">
 
         <label for="fsHost">File system hostname for download URL <em>(Web accessible w/o "http://")</em></label>

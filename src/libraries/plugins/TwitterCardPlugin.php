@@ -45,15 +45,15 @@ class TwitterCardPlugin extends PluginBase
 
       $cnt = 0;
       foreach($photos as $photo)
-        $metaTags .= $this->addTag(sprintf('twitter:image%d', $cnt++), $photo['pathBase']);
+        $metaTags .= $this->addTag(sprintf('twitter:image%d', $cnt++), $photo['path_base']);
     }
     elseif($page === 'photo-detail')
     {
       $photo = $this->plugin->getData('photo');
-      $photoTitle = $photo['title'] !== '' ? $utilityObj->safe($photo['title'], false) : $photo['filenameOriginal'];
+      $photoTitle = $photo['title'] !== '' ? $utilityObj->safe($photo['title'], false) : $photo['filename_original'];
       $title = sprintf('%s from %s on @Trovebox', $photoTitle, $username);
       $metaTags .= $this->addTag('twitter:card', 'photo');
-      $metaTags .= $this->addTag('twitter:image', $photo['pathBase']);
+      $metaTags .= $this->addTag('twitter:image', $photo['path_base']);
     }
     elseif($page === 'albums')
     {
@@ -63,7 +63,7 @@ class TwitterCardPlugin extends PluginBase
 
       $title = sprintf('%s\'s albums on @Trovebox', $username);
       $metaTags .= $this->addTag('twitter:card', 'photo');
-      $metaTags .= $this->addTag('twitter:image', $photo['pathBase']);
+      $metaTags .= $this->addTag('twitter:image', $photo['path_base']);
     }
 
     if(empty($photo))

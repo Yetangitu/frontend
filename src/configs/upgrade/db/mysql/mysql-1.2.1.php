@@ -6,7 +6,7 @@ $sql = <<<SQL
   CREATE TABLE IF NOT EXISTS `{$this->mySqlTablePrefix}group` (
     `id` varchar(6) NOT NULL,
     `owner` varchar(255) NOT NULL,
-    `appId` varchar(255) DEFAULT NULL,
+    `app_id` varchar(255) DEFAULT NULL,
     `name` varchar(255) DEFAULT NULL,
     `permission` tinyint(4) NOT NULL COMMENT 'Bitmask of permissions',
     UNIQUE KEY `id` (`id`,`owner`)
@@ -215,8 +215,8 @@ mysql_1_2_1($sql);
 
 // add new count columns
 $sql = <<<SQL
-  ALTER TABLE `{$this->mySqlTablePrefix}tag` ADD `countPrivate` INT NOT NULL DEFAULT '0' AFTER `owner` ,
-  ADD `countPublic` INT NOT NULL DEFAULT '0' AFTER `countPrivate` 
+  ALTER TABLE `{$this->mySqlTablePrefix}tag` ADD `count_private` INT NOT NULL DEFAULT '0' AFTER `owner` ,
+  ADD `count_public` INT NOT NULL DEFAULT '0' AFTER `count_private` 
 SQL;
 mysql_1_2_1($sql);
 
@@ -246,9 +246,9 @@ foreach($photos as $photo)
 foreach($tags as $tag => $counts)
 {
   $sql = <<<SQL
-    UPDATE `{$this->mySqlTablePrefix}tag` SET countPrivate=:countPrivate, countPublic=:countPublic WHERE id=:id AND owner=:owner
+    UPDATE `{$this->mySqlTablePrefix}tag` SET count_private=:count_private, count_public=:count_public WHERE id=:id AND owner=:owner
 SQL;
-  mysql_1_2_1($sql, array(':countPrivate' => $counts['private'], ':countPublic' => $counts['public'], ':id' => $tag, ':owner' => $owner));
+  mysql_1_2_1($sql, array(':count_private' => $counts['private'], ':count_public' => $counts['public'], ':id' => $tag, ':owner' => $owner));
 }
 /*********** // tag tables ***********/
 

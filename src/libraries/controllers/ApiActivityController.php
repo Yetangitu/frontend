@@ -26,10 +26,10 @@ class ApiActivityController extends ApiBaseController
     if(isset($attributes['crumb']))
       unset($attributes['crumb']);
 
-    $elementId = $attributes['elementId'];
-    unset($attributes['elementId']);
+    $element_id = $attributes['element_id'];
+    unset($attributes['element_id']);
 
-    $status = $this->activity->create($elementId, $attributes);
+    $status = $this->activity->create($element_id, $attributes);
     if($status !== false)
       return $this->success('Created activity for user', true);
     else
@@ -88,7 +88,7 @@ class ApiActivityController extends ApiBaseController
     $return = array();
     foreach($activities as $activity)
     {
-      $grp = sprintf('%s-%s', date($fmt, $activity['dateCreated']), $activity['type']);
+      $grp = sprintf('%s-%s', date($fmt, $activity['date_created']), $activity['type']);
       $return[$grp][] = $activity;
     }
 
@@ -98,7 +98,7 @@ class ApiActivityController extends ApiBaseController
   protected function parseFilters($filterOpts)
   {
     $pageSize = 10;
-    $filters = array('sortBy' => 'dateCreated,desc');
+    $filters = array('sortBy' => 'date_created,desc');
     if($filterOpts !== null)
     {
       $filterOpts = (array)explode('/', $filterOpts);

@@ -17,7 +17,7 @@ class Webhook extends BaseModel
 
   /**
     * Create an action to a photo/video.
-    * Accepts a set of params that must include a type and targetType
+    * Accepts a set of params that must include a type and target_type
     *
     * @param array $params Params describing the action to be added
     * @return mixed Action ID on success, false on failure
@@ -97,7 +97,7 @@ class Webhook extends BaseModel
 
   public function getValidAttributes($params)
   {
-    $valid = array('id' => 1, 'appId' => 1, 'callback' => 1, 'topic' => 1, 'verifyToken' => 1, 'challenge' => 1, 'secret' => 1);
+    $valid = array('id' => 1, 'app_id' => 1, 'callback' => 1, 'topic' => 1, 'verifyToken' => 1, 'challenge' => 1, 'secret' => 1);
     foreach((array)$params as $key => $val)
     {
       if(!isset($valid[$key]))
@@ -115,7 +115,7 @@ class Webhook extends BaseModel
   private static function getDefaultAttributes()
   {
     return array(
-      'appId' => $this->config->application->appId
+      'app_id' => $this->config->application->app_id
     );
   }
 }

@@ -8,7 +8,7 @@ $sql = <<<SQL
     `id` varchar(6) NOT NULL,
     `owner` varchar(255) NOT NULL,
     `resource` text NOT NULL,
-    `dateCreated` int(11) NOT NULL,
+    `date_created` int(11) NOT NULL,
     PRIMARY KEY (`owner`,`id`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 SQL;

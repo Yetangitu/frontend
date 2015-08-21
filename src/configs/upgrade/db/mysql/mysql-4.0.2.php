@@ -3,13 +3,13 @@
 $status = true;
 
 $sql = <<<SQL
- ALTER TABLE `{$this->mySqlTablePrefix}activity` ADD `elementId` VARCHAR( 6 ) NOT NULL AFTER `type` 
+ ALTER TABLE `{$this->mySqlTablePrefix}activity` ADD `element_id` VARCHAR( 6 ) NOT NULL AFTER `type` 
 SQL;
 
 $status = $status && mysql_4_0_2($sql);
 
 $sql = <<<SQL
- ALTER TABLE `{$this->mySqlTablePrefix}album` ADD `dateLastPhotoAdded` INT NOT NULL DEFAULT '0';
+ ALTER TABLE `{$this->mySqlTablePrefix}album` ADD `date_last_photo_added` INT NOT NULL DEFAULT '0';
 SQL;
 
 $status = $status && mysql_4_0_2($sql);

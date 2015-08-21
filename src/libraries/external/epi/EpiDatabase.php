@@ -2,6 +2,7 @@
 class EpiDatabase
 {
   const MySql = 'mysql';
+  const PostgreSql = 'pgsql';
   private static $instances = array(), $type, $name, $host, $user, $pass;
   private $_type, $_name, $_host, $_user, $_pass;
   public $dbh;
@@ -34,10 +35,13 @@ class EpiDatabase
       $sth = $this->prepare($sql, $params);
       if(!$sth)
         return false;
-      else if(preg_match('/^(insert|replace)/i', $sql))
-        return $this->dbh->lastInsertId();
       else
-        return $sth->rowCount();
+        return ($sth->errorCode() === '00000');
+
+      //else if(preg_match('/^(insert|replace)/i', $sql))
+      //  return $this->dbh->lastInsertId();
+      //else
+      //  return $sth->rowCount();
     }
     catch(PDOException $e)
     {
@@ -140,11 +144,12 @@ class EpiDatabase
         $dsn .= sprintf(';port=%s', $port);
       if($this->_name != '')
         $dsn .= sprintf(';dbname=%s', $this->_name);
-      $dsn .= ';charset=utf8';
+      $dsn .= ";options='--client_encoding=UTF8'";
       $this->dbh = new PDO($dsn, $this->_user, $this->_pass, array(
         PDO::ATTR_PERSISTENT => true
       ));
       $this->dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $this->dbh->setAttribute(PDO::ATTR_CASE, PDO::CASE_LOWER);
     }
     catch(Exception $e)
     {

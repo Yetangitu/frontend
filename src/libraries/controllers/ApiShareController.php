@@ -38,7 +38,7 @@ class ApiShareController extends ApiController
         return $this->error('Could not get first photo to share.', false);
       $params['photo'] = $photoResp['result']['path200x200'];
       $params['photoLarge'] = $photoResp['result']['path800x800'];
-      $params['title'] = $photoResp['result']['title'] != '' ? $photoResp['result']['title'] : $photoResp['result']['filenameOriginal'];
+      $params['title'] = $photoResp['result']['title'] != '' ? $photoResp['result']['title'] : $photoResp['result']['filename_original'];
       $params['url'] = sprintf('%s/token-%s', $photoResp['result']['url'], $token);
       $params['permission'] = $photoResp['result']['permission'];
     }
@@ -111,19 +111,19 @@ class ApiShareController extends ApiController
     $body = nl2br($_POST['message']);
     if(!isset($_POST['attachment']))
     {
-      $body .= sprintf('<p><img src="%s"></p>', $photo['pathBase']);
+      $body .= sprintf('<p><img src="%s"></p>', $photo['path_base']);
     }
     else
     {
       $photoObj = new Photo;
-      $localFile = $photoObj->storeLocally($photo['pathBase']);
+      $localFile = $photoObj->storeLocally($photo['path_base']);
       if($localFile === false)
         return false;
 
-      $emailer->addAttachment($localFile, $photo['filenameOriginal']);
+      $emailer->addAttachment($localFile, $photo['filename_original']);
     }
 
-    $subject = sprintf('The photo "%s" has been shared with you', $photo['filenameOriginal']);
+    $subject = sprintf('The photo "%s" has been shared with you', $photo['filename_original']);
     if(!empty($photo['title']))
       $subject = $photo['title'];
     $emailer->setSubject($subject);

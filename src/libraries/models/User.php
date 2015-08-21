@@ -122,9 +122,9 @@ class User extends BaseModel
       return $defaultUrl;
 
     if($protocol === 'https')
-      $gravatarUrl = 'https://secure.gravatar.com/avatar/';
+      $gravatarUrl = 'https://www.unternet.org/avatar/';
     else
-      $gravatarUrl = 'http://www.gravatar.com/avatar/';
+      $gravatarUrl = 'http://www.unternet.org/avatar/';
 
     $hash = md5(strtolower(trim($email)));
     return sprintf('%s%s?s=%s&d=%s', $gravatarUrl, $hash, $size, urlencode($defaultUrl));

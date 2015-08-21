@@ -6526,10 +6526,10 @@ op.ns = op.namespace = function(ns){
             if(changedParams.hasOwnProperty(i)) {
               if(i == 'active') {
                 isRestore = changedParams[i];
-              } else if(i == 'dateTaken') {
+              } else if(i == 'date_taken') {
                 if(changedParams[i].search(/^([+-])/) === 0) {
                   // add or subtract units. See gh-321
-                  options.data[i] = phpjs.strtotime(changedParams[i], model.previous('dateTaken'));
+                  options.data[i] = phpjs.strtotime(changedParams[i], model.previous('date_taken'));
                 } else {
                   options.data[i] = phpjs.strtotime(changedParams[i]);
                 }
@@ -6902,7 +6902,7 @@ op.ns('data.store').Tags = new op.data.collection.Tag();
     template : _.template($('#photo-detail-date-tmpl').html()),
     editable    : {
       '.date.edit' : {
-        name: 'dateTaken',
+        name: 'date_taken',
         title: 'Edit Photo Date',
         emptytext: 'Set a date',
         placement: 'top',
@@ -7082,7 +7082,7 @@ op.ns('data.store').Tags = new op.data.collection.Tag();
       // change the main image
       $(this.el).find('.photo img')
         .attr('src', this.model.get(this.largePath))
-      $title.html(TBX.format.sprintf('%s / Photo / %s / Trovebox', TBX.profiles.getOwnerUsername(), this.model.get('title') || this.model.get('filenameOriginal')));
+      $title.html(TBX.format.sprintf('%s / Photo / %s / Trovebox', TBX.profiles.getOwnerUsername(), this.model.get('title') || this.model.get('filename_original')));
 
       $(this.el).find('.photo .photo-view-modal-click')
         .attr('data-id', this.model.get('id'))
@@ -7677,7 +7677,7 @@ op.ns('data.store').Tags = new op.data.collection.Tag();
   
   _.extend( Lightbox.prototype, Backbone.Events, {
 	
-    imagePathKey : 'pathBase',
+    imagePathKey : 'path_base',
     
     _initialize : function(){
       if( this._initialized ) return;
@@ -7910,7 +7910,7 @@ op.ns('data.store').Tags = new op.data.collection.Tag();
         $photo.removeClass('last');
         
       // set the title to include the photo's title
-      $title.html(TBX.format.sprintf('%s / Photo / %s / Trovebox', TBX.profiles.getOwnerUsername(), this.model.get('title') || this.model.get('filenameOriginal')));
+      $title.html(TBX.format.sprintf('%s / Photo / %s / Trovebox', TBX.profiles.getOwnerUsername(), this.model.get('title') || this.model.get('filename_original')));
 
       if( !(c = this.cache[this.model.get('id')]) ){
         var c = this.cache[this.model.get('id')] = new Image();
@@ -8357,7 +8357,7 @@ op.ns('data.store').Tags = new op.data.collection.Tag();
             var dateAdjustedValue = formParams[i].value;
             for(var innerI=0; innerI<idsArr.length; innerI++) {
               op.data.store.Photos.get(idsArr[innerI])
-              .set({dateTaken: dateAdjustedValue}, {silent: true})
+              .set({date_taken: dateAdjustedValue}, {silent: true})
               .save();
             }
             OP.Util.fire('callback:remove-spinners');
@@ -9618,7 +9618,7 @@ var Gallery = (function($) {
 	 * to the image. 
 	 */
 	var createImageElement = function(parent, item) {
-    var d = new Date(item.dateTaken*1000);
+    var d = new Date(item.date_taken*1000);
     var pageObject = TBX.init.pages.photos;
     var qsRe = /(page|returnSizes)=[^&?]+\&?/g;
     var qs = pageObject.pageLocation.search.replace(qsRe, '');
@@ -9733,7 +9733,7 @@ var Gallery = (function($) {
 		});
 
     // insert calendar icon
-    var d = new Date(item.dateTakenYear, item.dateTakenMonth - 1, item.dateTakenDay);
+    var d = new Date(item.date_taken_year, item.date_taken_month - 1, item.date_taken_day);
     currentDate = d.getYear()+'-'+d.getMonth()+'-'+d.getDay();
     imageContainer.append(dateSeparator(model, d));
     lastDate = currentDate;
@@ -10516,9 +10516,9 @@ var Gallery = (function($) {
             // since sort order for the API is static and onload changes the sort order for albums and gallery we need to mimic the controller behavior in JS
             if(_this.pageLocation.search.search('sortBy') === -1) {
               if(_this.pageLocation.pathname.search('/album-') === -1) // gallery
-                _this.pageLocation.search += concat + 'sortBy=dateUploaded,desc';
+                _this.pageLocation.search += concat + 'sortBy=date_uploaded,desc';
               else // album
-                _this.pageLocation.search += concat + 'sortBy=dateTaken,asc';
+                _this.pageLocation.search += concat + 'sortBy=date_taken,asc';
             }
 
             util.load(_this, async);

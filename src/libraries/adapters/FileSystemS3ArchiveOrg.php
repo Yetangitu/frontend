@@ -20,9 +20,9 @@ class FileSystemS3ArchiveOrg extends FileSystemS3 implements FileSystemInterface
   public function deletePhoto($photo)
   {
     // delete original here and rest in s3
-    $myPhoto = array('pathOriginal' => $photo['pathOriginal']);
+    $myPhoto = array('path_original' => $photo['path_original']);
     $parentPhoto = $myPhoto;
-    unset($parentPhoto['pathOriginal']);
+    unset($parentPhoto['path_original']);
     return $this->archiveOrg->deletePhoto($myPhoto) && parent::deletePhoto($parentPhoto);
   }
   /**
@@ -37,8 +37,8 @@ class FileSystemS3ArchiveOrg extends FileSystemS3 implements FileSystemInterface
 
   public function downloadPhoto($photo)
   {
-    $pathOriginal = str_replace($this->getHost(), $this->archiveOrg->getHost(), $photo['pathOriginal']);
-    $fp = fopen($pathOriginal, 'r');
+    $path_original = str_replace($this->getHost(), $this->archiveOrg->getHost(), $photo['path_original']);
+    $fp = fopen($path_original, 'r');
     return $fp;
   }
 
@@ -67,12 +67,12 @@ class FileSystemS3ArchiveOrg extends FileSystemS3 implements FileSystemInterface
       return $this->archiveOrg->fs->getPhoto($filename);
   }
 
-  public function putPhoto($localFile, $remoteFile, $dateTaken)
+  public function putPhoto($localFile, $remoteFile, $date_taken)
   {
     if(strpos($remoteFile, '/original/') === false)
-      return parent::putPhoto($localFile, $remoteFile, $dateTaken);
+      return parent::putPhoto($localFile, $remoteFile, $date_taken);
     else
-      return $this->archiveOrg->fs->putPhoto($localFile, $remoteFile, $dateTaken);
+      return $this->archiveOrg->fs->putPhoto($localFile, $remoteFile, $date_taken);
   }
 
   public function putPhotos($files)

@@ -144,8 +144,8 @@ class AWSCredentialMockSdb extends AWSSuccessResponse
     $this->body->SelectResult->Item->Name = 'foo';
     $this->body->SelectResult->Item->Attribute = array(
       $this->attr('name', 'unittest'),
-      $this->attr('clientSecret', 'clientSecret'),
-      $this->attr('userToken', 'userToken')
+      $this->attr('client_secret', 'client_secret'),
+      $this->attr('user_token', 'user_token')
     );
 
   }
@@ -171,7 +171,7 @@ class AWSGroupMockSdb extends AWSSuccessResponse
       $this->body->SelectResult->Item = new stdClass;
       $this->body->SelectResult->Item->Name = 'foo';
       $this->body->SelectResult->Item->Attribute = array(
-        $this->attr('name', 'clientSecret'),
+        $this->attr('name', 'client_secret'),
         $this->attr('members', array('user@test.com', 'foo@bar.com'))
       );
     }
@@ -183,7 +183,7 @@ class AWSGroupMockSdb extends AWSSuccessResponse
         $this->body->SelectResult->Item[$i] = new stdClass;
         $this->body->SelectResult->Item[$i]->Name = 'foo';
         $this->body->SelectResult->Item[$i]->Attribute = array(
-          $this->attr('name', 'clientSecret'),
+          $this->attr('name', 'client_secret'),
           $this->attr('members', array('user@test.com', 'foo@bar.com'))
         );
       }
@@ -210,7 +210,7 @@ class AWSPhotoMockSdb extends AWSSuccessResponse
     $this->body->SelectResult->Item->Name = 'foo';
     $this->body->SelectResult->Item->Attribute = array(
       $this->attr('host', 'unittest'),
-      $this->attr('dateTaken', time())
+      $this->attr('date_taken', time())
     );
 
   }
