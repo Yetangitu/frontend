@@ -8428,8 +8428,11 @@ op.ns('data.store').Tags = new op.data.collection.Tag();
     };
     this.submit.search = function(ev) {
       ev.preventDefault();
-      var $form = $(ev.target), $button = $('button', $form), query = $('input[type="search"]', $form).val(), albums = OP.Album.getAlbums(), 
-          albumSearch = _.where(albums, {name: query.replace(/,+$/, '')}), isAlbum  = albumSearch.length > 0, url;
+      var $form = $(ev.target), $button = $('button', $form), query = $('input[type="search"]', $form).val(),
+          albums = OP.Album.getAlbums(), albumSearch = _.where(albums, {name: query.replace(/,+$/, '')}), isAlbum  = albumSearch.length > 0, 
+          tags = OP.Tag.getTags(), tagSearch = _.where(tags, {id: query.replace(/,+$/, '')}), isTag = tagSearch.length > 0,
+          url;
+
       if(query === '')
         return;
 
@@ -8437,9 +8440,12 @@ op.ns('data.store').Tags = new op.data.collection.Tag();
       // trim leading and trailing commas and spaces in between
       if(isAlbum) {
         url = TBX.format.sprintf('/photos/album-%s/list', albumSearch[0].id);
-      } else {
+      } else if (isTag) {
         query = query.replace(/^,\W*|,\W*$/g, '').replace(/\W*,\W*/, ',');
         url = TBX.format.sprintf('/photos/tags-%s/list', query);
+      } else {
+        query = query.replace(/^,\W*|,\W*$/g, '').replace(/\W*,\W*/, ',');
+        url = TBX.format.sprintf('/photos/keywords-%s/list', query);
       }
       location.href = url;
     };
