@@ -19,7 +19,13 @@
     </div>
   <?php } ?>
   <div class="span6 alternate">
-    <!-- no alternate login methods allowed here... -->
+    <strong>You can also sign in using...</strong>
+    <ul class="unstyled">
+      <li><a href="" class="btn btn-theme-secondary persona loginExternal">Mozilla Persona</a></li>
+      <?php if($this->plugin->isActive('FacebookConnect')) { ?>
+        <li><a href="" class="btn btn-theme-secondary loginExternal">Facebook Connect</a></li>
+      <?php } ?>
+    </ul>
   </div>
 </div>
 <script src="https://login.persona.org/include.js"></script>
